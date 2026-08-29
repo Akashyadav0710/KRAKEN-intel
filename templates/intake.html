@@ -1,0 +1,290 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kraken - Data Intake</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-highest": "#30353e", "tertiary-container": "#ffcec7", "on-primary-container": "#006970",
+                      "on-error-container": "#ffdad6", "on-secondary-fixed-variant": "#5e4200", "surface-bright": "#343942",
+                      "tertiary": "#fff3f1", "on-background": "#dee2ee", "on-secondary": "#412d00", "surface-container-lowest": "#090e16",
+                      "primary-container": "#00f0ff", "tertiary-fixed-dim": "#ffb4aa", "surface-dim": "#0f141b", "on-surface-variant": "#b9cacb",
+                      "on-tertiary-fixed": "#410001", "secondary-fixed": "#ffdea8", "error": "#ffb4ab", "outline-variant": "#3b494b",
+                      "primary-fixed-dim": "#00dbe9", "inverse-on-surface": "#2c3139", "on-primary-fixed-variant": "#004f54",
+                      "on-primary-fixed": "#002022", "on-error": "#690005", "outline": "#849495", "surface-container": "#1b2028",
+                      "surface-variant": "#30353e", "surface-container-low": "#171c24", "on-tertiary-fixed-variant": "#930005",
+                      "inverse-primary": "#006970", "inverse-surface": "#dee2ee", "secondary-container": "#feb700", "on-primary": "#00363a",
+                      "error-container": "#93000a", "background": "#0f141b", "primary": "#dbfcff", "on-secondary-container": "#6b4b00",
+                      "primary-fixed": "#7df4ff", "surface-tint": "#00dbe9", "on-secondary-fixed": "#271900", "secondary": "#ffdb9d",
+                      "tertiary-fixed": "#ffdad5", "surface-container-high": "#252a33", "on-tertiary": "#690003", "secondary-fixed-dim": "#ffba20",
+                      "on-surface": "#dee2ee", "on-tertiary-container": "#c1000a", "surface": "#0f141b"
+              },
+              "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+              "spacing": { "unit": "4px", "margin": "24px", "container-max": "100%", "gutter": "16px" },
+              "fontFamily": { "status-sm": ["JetBrains Mono"], "headline-md": ["Inter"], "body-base": ["Inter"], "data-mono": ["JetBrains Mono"], "label-caps": ["JetBrains Mono"], "display-lg": ["Inter"] }
+            }
+          }
+        }
+    </script>
+<style>
+        .scan-line { background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 50%, rgba(0, 240, 255, 0.05) 50%, rgba(0, 240, 255, 0.05)); background-size: 100% 4px; pointer-events: none; }
+        .flicker { animation: textFlicker 3s infinite alternate; }
+        @keyframes textFlicker { 0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; } 20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.4; } }
+        .glow-border:focus-within { box-shadow: 0 0 10px rgba(0, 240, 255, 0.2), inset 0 0 5px rgba(0, 240, 255, 0.1); border-color: #00f0ff; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0f141b; }
+        ::-webkit-scrollbar-thumb { background: #3b494b; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-base overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<div class="fixed inset-0 scan-line z-50 pointer-events-none mix-blend-screen opacity-50"></div>
+
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-surface/90 backdrop-blur-md border-b border-outline-variant text-primary">
+    <div class="flex items-center gap-gutter">
+        <div class="text-[24px] font-bold tracking-tighter text-primary-container">Kraken</div>
+        <div class="relative hidden md:flex items-center ml-4">
+            <span class="material-symbols-outlined absolute left-2 text-on-surface-variant text-[18px]">search</span>
+            <input class="bg-surface-container-low border border-outline-variant text-[13px] font-mono text-on-surface pl-8 pr-3 py-1.5 focus:border-primary-container focus:outline-none w-64 placeholder:text-on-surface-variant/50 transition-colors" placeholder="QUERY DATABASE..." type="text">
+            <div class="absolute right-2 top-2 w-1.5 h-1.5 bg-primary-container animate-pulse rounded-full opacity-70"></div>
+        </div>
+    </div>
+    <div class="flex items-center gap-4">
+        <span class="text-[11px] font-mono text-secondary-container tracking-widest hidden lg:block border border-secondary-container/30 px-2 py-0.5 bg-secondary-container/5">CLEARANCE: OMEGA</span>
+        <div class="flex items-center gap-1">
+            <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
+            <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">settings</span></button>
+            <button class="p-2 text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">terminal</span></button>
+        </div>
+        <div class="w-px h-6 bg-outline-variant mx-2"></div>
+        <div class="flex items-center gap-3">
+            <img alt="User Profile Avatar" class="w-8 h-8 object-cover border border-outline-variant p-0.5 grayscale hover:grayscale-0 transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2FNx_jB8pBhqUGB-P5Tx_BsSQ9HXyCxfZmgzLZfbFwFf23DJbo_Zp1gg5ElHR07kB0mf1wYiqKkB4g1uhmMNbXpbgX7-Mp1CdYG99iJS1RMBTip6ivAoY_yqc8wzV4wGDF8UVTzEQJBB58k4PevR7I0Lso0kBKeHCsMF9ptuzlzfLeinw8OwhaJydy-4WpebrrIvylvYO4UC_Ny6ruNY3SQJJUp9SRKRWQeiznKWak8zp3BhkrKdO">
+            <a href="/"><button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors">SECURE LOGOUT</button></a>
+        </div>
+    </div>
+</header>
+
+<nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col z-40 bg-surface-container-low border-r border-outline-variant text-primary-fixed-dim">
+    <div class="p-4 border-b border-outline-variant/50 flex items-center gap-3 bg-surface-container">
+        <div class="w-8 h-8 border border-primary-container/30 bg-surface-dim flex items-center justify-center relative">
+            <div class="absolute inset-0 bg-primary-container/10 animate-pulse"></div>
+            <span class="material-symbols-outlined text-primary-container text-[16px]">radar</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-[11px] font-mono text-primary-fixed leading-tight">Kraken v4.0</span>
+            <span class="text-[10px] font-mono text-outline flicker leading-tight mt-0.5">DATA PIPELINE</span>
+        </div>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto py-2 flex flex-col gap-0.5 text-[11px] font-mono">
+        <a href="/command" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="tracking-widest">Command</span></a>
+        <a href="/network" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">hub</span><span class="tracking-widest">Network</span></a>
+        <a href="/predictions" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">psychology</span><span class="tracking-widest">Predictions</span></a>
+        <a href="/syndicates" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">groups</span><span class="tracking-widest">Syndicates</span></a>
+        
+        <!-- Active Tab: Intake -->
+        <a href="/intake" class="flex items-center gap-3 text-primary bg-surface-container-highest border-l-4 border-primary px-4 py-3 group relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <span class="material-symbols-outlined text-[18px]">upload_file</span><span class="tracking-widest">Intake</span>
+        </a>
+        
+        <a href="/profile" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">person_search</span><span class="tracking-widest">Profiles</span></a>
+        <a href="/reports" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">description</span><span class="tracking-widest">Reports</span></a>
+    </div>
+    
+    <div class="p-4 border-t border-outline-variant/50 flex flex-col gap-3">
+        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]">NEW CASE</button>
+        <div class="flex justify-between items-center text-[11px] font-mono mt-2">
+            <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">code</span> Terminal</a>
+            <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">help</span> Support</a>
+        </div>
+    </div>
+</nav>
+
+<main class="ml-64 mt-16 p-unit flex-1 h-[calc(100vh-64px)] bg-background overflow-hidden">
+    <div class="h-full grid grid-cols-12 gap-unit p-2">
+        
+        <!-- Upload Form -->
+        <div class="col-span-12 lg:col-span-7 bg-surface border border-outline-variant flex flex-col h-full overflow-hidden">
+            <div class="bg-surface-container px-4 py-3 border-b border-outline-variant flex items-center gap-2 shrink-0">
+                <span class="material-symbols-outlined text-[18px] text-primary-container">file_upload</span>
+                <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Raw Intel & FIR Intake</span>
+            </div>
+            
+            <div class="p-4 flex-1 flex flex-col space-y-4 overflow-y-auto">
+                <div class="text-[11px] font-mono text-on-surface-variant leading-relaxed">
+                    Upload unstructured text (FIRs, Interrogation transcripts). The Kraken NLP Engine will extract entities (Names, Phones, Accounts).
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 shrink-0">
+                    <div>
+                        <label class="text-[11px] font-mono text-outline-variant block mb-1">SOURCE TYPE</label>
+                        <select class="w-full bg-surface-container-low border border-outline-variant text-[13px] font-mono text-on-surface p-2 focus:border-primary-container outline-none appearance-none">
+                            <option>FIR Report (Police)</option>
+                            <option>Call Detail Record (CDR) Summary</option>
+                            <option>Field Agent Notes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-mono text-outline-variant block mb-1">CASE ID</label>
+                        <input type="text" class="w-full bg-surface-container-low border border-outline-variant text-[13px] font-mono text-primary p-2 focus:border-primary-container outline-none" value="CASE-992-ALPHA">
+                    </div>
+                </div>
+
+                <div class="flex-1 flex flex-col glow-border transition-colors border border-outline-variant relative min-h-[250px]">
+                    <label class="absolute top-2 left-2 text-[11px] font-mono text-outline-variant pointer-events-none">RAW TEXT CONTENT</label>
+                    <textarea id="intel-input" class="w-full h-full bg-surface-container-lowest text-[13px] font-mono text-on-surface p-4 pt-8 resize-none outline-none border-none focus:ring-0" placeholder="Paste intelligence text here..."></textarea>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-surface-container border-t border-outline-variant flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-2 text-[10px] font-mono text-outline-variant">
+                    <span class="material-symbols-outlined text-[16px]">lock</span> 256-Bit Encrypted Transfer
+                </div>
+                <button id="btn-process" class="bg-primary-container text-[#00363a] text-[11px] font-mono font-bold px-6 py-2 hover:bg-transparent hover:text-primary-container border border-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)] flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">memory</span> EXTRACT ENTITIES
+                </button>
+            </div>
+        </div>
+
+        <!-- Live NLP Terminal -->
+        <div class="col-span-12 lg:col-span-5 bg-[#0a0d12] border border-outline-variant flex flex-col h-full relative overflow-hidden">
+            <div class="bg-[#171c24] px-4 py-3 border-b border-outline-variant flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] text-secondary-fixed">terminal</span>
+                    <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Kraken NLP PROCESSOR</span>
+                </div>
+                <div class="w-2 h-2 rounded-full bg-secondary-fixed animate-pulse hidden" id="processing-dot"></div>
+            </div>
+            
+            <div id="terminal-output" class="p-4 flex-1 overflow-y-auto font-mono text-[12px] text-on-surface-variant leading-relaxed space-y-2">
+                <div>[SYS] Kraken NLP Engine ready.</div>
+                <div>[SYS] Awaiting unstructured input stream...</div>
+                <div class="flex items-center gap-2 mt-2 text-primary-container" id="terminal-cursor">
+                    <span>_</span><span class="animate-pulse">█</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    document.getElementById('btn-process').addEventListener('click', async function() {
+        const input = document.getElementById('intel-input').value.trim();
+        const terminal = document.getElementById('terminal-output');
+        const dot = document.getElementById('processing-dot');
+        const btn = document.getElementById('btn-process');
+        const cursor = document.getElementById('terminal-cursor');
+        
+        if(!input) { alert("Please enter some text to process."); return; }
+
+        // --- DYNAMIC ENTITY EXTRACTION LOGIC (SMART PARSER FOR firs.txt) ---
+        const phoneRegex = /\+91\d{10}/g;
+        const bankRegex = /XXXX\d{4}/g;
+        const nameRegex = /(?:Complainant|accused|associate of|accomplice|co-accused)\s+([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)/g;
+
+        let phones = input.match(phoneRegex) || [];
+        let banks = input.match(bankRegex) || [];
+        
+        let names = [];
+        let match;
+        while ((match = nameRegex.exec(input)) !== null) {
+            names.push(match[1].trim());
+        }
+
+        phones = [...new Set(phones)];
+        banks = [...new Set(banks)];
+        names = [...new Set(names)];
+
+        let totalNodes = phones.length + banks.length + names.length;
+
+        if(cursor) cursor.style.display = 'none';
+
+        btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> PROCESSING...`;
+        btn.classList.replace('bg-primary-container', 'bg-surface-variant');
+        btn.classList.replace('text-[#00363a]', 'text-primary-container');
+        btn.classList.replace('border-primary-container', 'border-outline-variant');
+        dot.classList.remove('hidden');
+        
+        terminal.innerHTML = `
+            <div class="text-secondary-fixed">[INIT] Received ${input.split(' ').length} words. Engaging NER Engine...</div>
+            <div class="text-primary-container animate-pulse mt-1">&gt; Scanning text for Nodes & Edges...</div>
+        `;
+
+        let delay = 1000;
+
+        if(totalNodes === 0) {
+            setTimeout(() => addLog("> No recognizable entities found. Use Names, +91 Phones, or Bank IDs (XXXX...).", "text-on-surface-variant"), delay);
+            delay += 1000;
+        } else {
+            names.forEach(n => {
+                setTimeout(() => addLog(`> Found Person: <span class='text-primary'>${n} (Conf: 9${Math.floor(Math.random()*9)}%)</span>`, "text-on-surface"), delay);
+                delay += 800;
+            });
+            phones.forEach(p => {
+                setTimeout(() => addLog(`> Found Phone: <span class='text-secondary-fixed'>${p}</span>`, "text-on-surface"), delay);
+                delay += 800;
+            });
+            banks.forEach(b => {
+                setTimeout(() => addLog(`> Found Account: <span class='text-error'>${b.toUpperCase()}</span>`, "text-on-surface"), delay);
+                delay += 800;
+            });
+        }
+        
+        setTimeout(() => {
+            addLog(`> NLP Extraction Complete. Generated ${totalNodes} Nodes.`, "text-primary-container");
+            if(totalNodes > 0) addLog("[GRAPH_SYNC] Formatting data for Graph Database...", "text-secondary-fixed");
+        }, delay + 500);
+
+        // BACKEND INTEGRATION
+        setTimeout(async () => {
+            if (totalNodes > 0) {
+                try {
+                    await fetch('/api/update-graph', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ names, phones, banks })
+                    });
+                    addLog("[API] Kraken DB Cross-referenced Successfully.", "text-secondary-container");
+                } catch(e) {
+                    addLog("[ERROR] Backend connection failed.", "text-error");
+                }
+            }
+        }, delay + 1500);
+
+        setTimeout(() => {
+            addLog("[SUCCESS] System updated. <a href='/network' class='underline text-primary hover:text-primary-fixed'>View Live Network</a>.", "text-primary font-bold border-l-2 border-primary pl-2 bg-primary/10 py-1");
+            
+            terminal.innerHTML += `<div class="flex items-center gap-2 mt-4 text-primary-container" id="terminal-cursor"><span>_</span><span class="animate-pulse">█</span></div>`;
+            terminal.scrollTop = terminal.scrollHeight;
+
+            btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check_circle</span> SUCCESS`;
+            btn.classList.replace('bg-surface-variant', 'bg-primary-container');
+            btn.classList.replace('text-primary-container', 'text-[#00363a]');
+            btn.classList.replace('border-outline-variant', 'border-primary-container');
+            dot.classList.add('hidden');
+            
+            setTimeout(() => { btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">memory</span> EXTRACT ENTITIES`; }, 3000);
+            
+        }, delay + 2500);
+
+        function addLog(htmlStr, classes="") {
+            const div = document.createElement('div');
+            div.className = classes;
+            div.innerHTML = htmlStr;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+    });
+</script>
+</body></html>

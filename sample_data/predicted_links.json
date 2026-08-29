@@ -1,0 +1,92 @@
+[
+ {
+ "person_a": "Complainant Timothy Dutt",
+ "person_b": "Complainant Indrajit Pillay",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Acharya Road",
+ "person_b": "Lakshit Luthra",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Rachit Walla",
+ "person_b": "Abhiram Varghese",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Rachit Walla",
+ "person_b": "Kritika Buch",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Rachit Walla",
+ "person_b": "Bail Zila",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Rachit Walla",
+ "person_b": "Rehaan Bahl",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Rachit Walla",
+ "person_b": "Charita Chowdhury",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Rachit Walla",
+ "person_b": "Timothy Dutt",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Advaith Yadav",
+ "person_b": "Fiyaz Wali",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Advaith Yadav",
+ "person_b": "Abhiram Varghese",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Advaith Yadav",
+ "person_b": "Varenya Bajaj",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Advaith Yadav",
+ "person_b": "Vasa Road",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Advaith Yadav",
+ "person_b": "Kritika Buch",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Advaith Yadav",
+ "person_b": "Ishaan Patel",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ },
+ {
+ "person_a": "Advaith Yadav",
+ "person_b": "Bail Zila",
+ "confidence": 99,
+ "reason": "High network overlap (Common associates or financial trails)"
+ }
+]

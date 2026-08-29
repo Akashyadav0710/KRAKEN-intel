@@ -1,0 +1,278 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kraken - Syndicate Hierarchies</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-highest": "#30353e", "primary-container": "#00f0ff",
+                      "surface-dim": "#0f141b", "on-surface-variant": "#b9cacb",
+                      "secondary-fixed": "#ffdea8", "error": "#ffb4ab", "outline-variant": "#3b494b",
+                      "primary-fixed-dim": "#00dbe9", "outline": "#849495", "surface-container": "#1b2028",
+                      "surface-container-low": "#171c24", "secondary-container": "#feb700",
+                      "error-container": "#93000a", "background": "#0f141b", "primary": "#dbfcff",
+                      "primary-fixed": "#7df4ff", "surface": "#0f141b", "tertiary": "#fff3f1"
+              },
+              "spacing": { "unit": "4px", "gutter": "16px" },
+              "fontFamily": { "status-sm": ["JetBrains Mono"], "data-mono": ["JetBrains Mono"], "label-caps": ["JetBrains Mono"] }
+            }
+          }
+        }
+    </script>
+<style>
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        .scan-line { background: linear-gradient(to bottom, transparent 50%, rgba(0, 240, 255, 0.05) 50%); background-size: 100% 4px; pointer-events: none; }
+        .flicker { animation: textFlicker 3s infinite alternate; }
+        @keyframes textFlicker { 0%, 20%, 62%, 100% { opacity: 1; } 21%, 63% { opacity: 0.4; } }
+        
+        /* 💥 Scrollbar fixed right here 💥 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f141b; }
+        ::-webkit-scrollbar-thumb { background: #3b494b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+        
+        /* Hierarchy Tree CSS */
+        .tree-line { width: 2px; height: 30px; background-color: #3b494b; margin: 0 auto; }
+        .tree-branch-h { height: 2px; background-color: #3b494b; width: 100%; }
+        .tree-branch-v { width: 2px; height: 15px; background-color: #3b494b; margin: 0 auto; }
+</style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container selection:text-[#00363a]">
+
+<div class="fixed inset-0 scan-line z-50 pointer-events-none mix-blend-screen opacity-50"></div>
+
+<!-- Top Navbar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-surface/90 backdrop-blur-md border-b border-outline-variant text-primary">
+    <div class="flex items-center gap-4">
+        <div class="text-[24px] font-bold tracking-tighter text-primary-container">Kraken</div>
+        <div class="relative hidden md:flex items-center ml-4">
+            <span class="material-symbols-outlined absolute left-2 text-on-surface-variant text-[18px]">search</span>
+            <input class="bg-surface-container-low border border-outline-variant text-[13px] font-mono text-white pl-8 pr-3 py-1.5 focus:border-primary-container focus:outline-none w-64 placeholder:text-on-surface-variant/50 transition-colors" placeholder="SEARCH ORG DATABASE..." type="text">
+            <div class="absolute right-2 top-2 w-1.5 h-1.5 bg-primary-container animate-pulse rounded-full opacity-70"></div>
+        </div>
+    </div>
+    <div class="flex items-center gap-4">
+        <span class="text-[11px] font-mono text-secondary-container tracking-widest hidden lg:block border border-secondary-container/30 px-2 py-0.5 bg-secondary-container/5">CLEARANCE: OMEGA</span>
+        
+        <div class="flex items-center gap-1">
+            <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
+            <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">settings</span></button>
+            <button class="p-2 text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">terminal</span></button>
+        </div>
+        <div class="w-px h-6 bg-outline-variant mx-2"></div>
+        <a href="/"><button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors">SECURE LOGOUT</button></a>
+    </div>
+</header>
+
+<!-- Main Sidebar -->
+<nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col z-40 bg-surface-container-low border-r border-outline-variant text-primary-fixed-dim">
+    <div class="p-4 border-b border-outline-variant flex items-center gap-3">
+        <div class="w-8 h-8 border border-primary-container/30 bg-surface-dim flex items-center justify-center relative">
+            <div class="absolute inset-0 bg-primary-container/10 animate-pulse"></div>
+            <span class="material-symbols-outlined text-primary-container text-[16px]">radar</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-[11px] font-mono text-primary-fixed leading-tight">Kraken v4.0</span>
+            <span class="text-[10px] font-mono text-outline flicker leading-tight">GANG HIERARCHIES</span>
+        </div>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto py-2 flex flex-col text-[11px] font-mono">
+        <a href="/command" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">dashboard</span>Command</a>
+        <a href="/network" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">hub</span>Network</a>
+        <a href="/predictions" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">psychology</span>Predictions</a>
+        
+        <!-- Active -->
+        <a href="/syndicates" class="flex items-center gap-3 px-4 py-3 bg-surface-container-highest border-l-4 border-primary text-primary group relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <span class="material-symbols-outlined text-[18px]">groups</span>Syndicates
+        </a>
+        
+        <a href="/intake" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">upload_file</span>Intake</a>
+        <a href="/profile" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">person_search</span>Profiles</a>
+        <a href="/reports" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">description</span>Reports</a>
+    </div>
+
+    <div class="p-4 border-t border-outline-variant/50 flex flex-col gap-3">
+        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]">NEW CASE</button>
+        <div class="flex justify-between items-center text-[11px] font-mono mt-2">
+            <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">code</span> Terminal</a>
+            <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">help</span> Support</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 💥 BULLETPROOF ABSOLUTE SCROLL AREA 💥 -->
+<main class="absolute top-16 left-64 w-[calc(100%-16rem)] h-[calc(100vh-4rem)] flex bg-background">
+    
+    <!-- Left Column: Dynamic Syndicate Roster -->
+    <div class="w-72 h-full bg-surface-container-low border-r border-outline-variant flex flex-col shrink-0">
+        <div class="p-4 border-b border-outline-variant flex justify-between items-center shrink-0">
+            <span class="text-[11px] font-mono tracking-widest text-primary-container">KNOWN SYNDICATES</span>
+            <span class="material-symbols-outlined text-[16px] text-outline-variant">filter_list</span>
+        </div>
+        <!-- Iska apna alag scroll hai -->
+        <div class="flex-1 overflow-y-auto" id="target-list">
+            <div class="p-6 text-center text-outline-variant font-mono text-[12px] animate-pulse">ANALYZING PREDICTIONS...</div>
+        </div>
+    </div>
+
+    <!-- Right Column: Interactive Org Chart -->
+    <!-- Iska apna alag scroll (horizontal + vertical dono support karega) -->
+    <div class="flex-1 h-full overflow-auto p-6 pb-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MCcgaGVpZ2h0PSc0MCc+PHBhdGggZD0nTSA0MCAwIEwgMCAwIDAgNDAnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzI1MkQzQScgc3Ryb2tlLXdpZHRoPScxJy8+PC9zdmc+')]">
+        
+        <div class="flex justify-between items-center mb-8 border-b border-outline-variant/50 pb-4 min-w-[600px]">
+            <div>
+                <h2 class="text-[24px] font-mono font-bold text-white tracking-tight uppercase" id="org-title">SELECT A SYNDICATE</h2>
+                <span class="text-[12px] font-mono text-outline-variant" id="org-status">AWAITING SELECTION...</span>
+            </div>
+            <button class="bg-surface-container border border-outline-variant px-4 py-2 text-[11px] font-mono hover:border-primary-container hover:text-primary-container transition-colors">EXPORT DOSSIER</button>
+        </div>
+
+        <!-- DYNAMIC ORG CHART WRAPPER -->
+        <div class="flex flex-col items-center w-full min-w-max" id="org-chart">
+            <div class="mt-20 text-outline-variant font-mono text-[14px]">Select a cartel from the left panel to view hierarchy.</div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    let syndicatesData = {};
+
+    async function loadDynamicSyndicates() {
+        try {
+            const res = await fetch('/api/graph-data');
+            const data = await res.json();
+            
+            if (data.status === 'success' && data.predictions) {
+                // Group predictions by Source (person_a) to form distinct Cartels
+                data.predictions.forEach(p => {
+                    const bossName = p.source;
+                    if(!syndicatesData[bossName]) {
+                        syndicatesData[bossName] = [];
+                    }
+                    syndicatesData[bossName].push(p);
+                });
+
+                // Generate Left Sidebar dynamically based on groups
+                const listContainer = document.getElementById('target-list');
+                listContainer.innerHTML = '';
+                
+                let isFirst = true;
+                let colorIndex = 0;
+                const colors = ['error', 'secondary-container', 'primary-container', 'tertiary-container'];
+
+                for (const [bossName, links] of Object.entries(syndicatesData)) {
+                    // Only show as a syndicate if they have connections
+                    if (links.length > 0) {
+                        const color = colors[colorIndex % colors.length];
+                        
+                        listContainer.innerHTML += `
+                            <div class="p-4 border-b border-outline-variant/30 cursor-pointer hover:bg-surface-container transition-colors border-l-2 border-l-transparent syndicate-btn" 
+                                 onclick="renderSyndicate('${bossName}', this, '${color}')">
+                                <div class="flex justify-between items-start mb-1">
+                                    <span class="text-[14px] font-mono font-bold text-white uppercase truncate pr-2">${bossName} CARTEL</span>
+                                    <span class="text-[10px] font-mono bg-${color}/10 text-${color} px-1 border border-${color} shrink-0">TIER-${colorIndex + 1}</span>
+                                </div>
+                                <div class="text-[10px] font-mono text-outline-variant">TYPE: AI Linked • ${links.length} Targets</div>
+                            </div>
+                        `;
+                        colorIndex++;
+                        
+                        // Auto-load the first one
+                        if(isFirst) {
+                            setTimeout(() => {
+                                listContainer.firstElementChild.click();
+                            }, 100);
+                            isFirst = false;
+                        }
+                    }
+                }
+                
+                if (Object.keys(syndicatesData).length === 0) {
+                    listContainer.innerHTML = `<div class="p-6 text-center text-outline-variant font-mono text-[12px]">NO LINKS DETECTED</div>`;
+                }
+            }
+        } catch (e) {
+            console.error("Kraken DB SYNC ERROR: ", e);
+        }
+    }
+
+    // This dynamically renders the tree based on ANY number of targets
+    window.renderSyndicate = function(bossName, element, color) {
+        // Handle Sidebar Highlighting
+        document.querySelectorAll('.syndicate-btn').forEach(div => {
+            div.classList.remove('bg-surface-container-highest', 'border-l-error', 'border-l-secondary-container', 'border-l-primary-container', 'border-l-tertiary-container');
+            div.classList.add('border-l-transparent');
+        });
+        element.classList.add('bg-surface-container-highest', `border-l-${color}`);
+        element.classList.remove('border-l-transparent');
+
+        const links = syndicatesData[bossName] || [];
+
+        // Update Top Title
+        document.getElementById('org-title').innerText = `${bossName} NETWORK`;
+        document.getElementById('org-title').className = `text-[24px] font-mono font-bold text-${color} tracking-tight uppercase`;
+        document.getElementById('org-status').innerText = `STATUS: ACTIVE • ${links.length} IDENTIFIED TARGETS`;
+        document.getElementById('org-status').className = `text-[12px] font-mono text-${color}`;
+
+        // Generate Target Cards dynamically
+        let associatesHTML = '';
+        links.forEach(link => {
+            const conf = link.confidence > 1 ? link.confidence.toFixed(1) : (link.confidence * 100).toFixed(1);
+            associatesHTML += `
+                <div class="flex flex-col items-center w-40 m-2 group cursor-pointer shrink-0 z-10 relative">
+                    <div class="tree-branch-v -mt-[15px] mb-[0px]"></div>
+                    <span class="text-[10px] font-mono text-${color} tracking-widest mb-1">TARGET</span>
+                    <div class="w-full bg-surface-container border border-outline-variant p-3 text-center group-hover:border-${color} transition-colors">
+                        <span class="material-symbols-outlined text-outline-variant group-hover:text-${color} text-[24px] transition-colors">person_search</span>
+                        <h3 class="text-[12px] font-mono font-bold text-white uppercase mt-1 truncate w-full px-1" title="${link.target}">${link.target}</h3>
+                    </div>
+                    <div class="w-full bg-surface-container-low border border-outline-variant p-2 text-center mt-[-1px]">
+                        <p class="text-[10px] font-mono text-on-surface-variant">${conf}% Conf.</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Inject Full Tree
+        document.getElementById('org-chart').innerHTML = `
+            <!-- BOSS LEVEL -->
+            <div class="flex flex-col items-center group cursor-pointer z-10 relative">
+                <span class="text-[10px] font-mono text-${color} tracking-widest mb-1">MASTERMIND / BOSS</span>
+                <div class="w-64 bg-[#171c24] border-2 border-${color} p-4 text-center shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                    <span class="material-symbols-outlined text-${color} text-[32px] mb-2 flicker">military_tech</span>
+                    <h3 class="text-[18px] font-mono font-bold text-white uppercase">${bossName}</h3>
+                    <p class="text-[11px] font-mono text-outline-variant mt-1">Direct Nodes: ${links.length}</p>
+                </div>
+            </div>
+
+            <!-- CONNECTOR LINE DOWN -->
+            <div class="tree-line"></div>
+            
+            <!-- HORIZONTAL BRANCH (Dynamically wide based on content) -->
+            <div class="w-full relative flex justify-center mt-[0px]">
+                <!-- Make line almost as wide as the flex container, minus margins -->
+                <div class="tree-branch-h absolute top-0 w-[calc(100%-10rem)] max-w-[80%]"></div>
+            </div>
+
+            <!-- DYNAMIC ASSOCIATES FLEX CONTAINER -->
+            <div class="flex flex-wrap justify-center w-full max-w-5xl gap-y-6 mt-[15px]">
+                ${associatesHTML}
+            </div>
+        `;
+    };
+
+    document.addEventListener("DOMContentLoaded", loadDynamicSyndicates);
+</script>
+</body></html>

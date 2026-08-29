@@ -1,0 +1,292 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KRAKEN - Secure Access</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#30353e",
+                        "tertiary-container": "#ffcec7",
+                        "on-primary-container": "#006970",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#5e4200",
+                        "surface-bright": "#343942",
+                        "tertiary": "#fff3f1",
+                        "on-background": "#dee2ee",
+                        "on-secondary": "#412d00",
+                        "surface-container-lowest": "#090e16",
+                        "primary-container": "#00f0ff",
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "surface-dim": "#0f141b",
+                        "on-surface-variant": "#b9cacb",
+                        "on-tertiary-fixed": "#410001",
+                        "secondary-fixed": "#ffdea8",
+                        "error": "#ffb4ab",
+                        "outline-variant": "#3b494b",
+                        "primary-fixed-dim": "#00dbe9",
+                        "inverse-on-surface": "#2c3139",
+                        "on-primary-fixed-variant": "#004f54",
+                        "on-primary-fixed": "#002022",
+                        "on-error": "#690005",
+                        "outline": "#849495",
+                        "surface-container": "#1b2028",
+                        "surface-variant": "#30353e",
+                        "surface-container-low": "#171c24",
+                        "on-tertiary-fixed-variant": "#930005",
+                        "inverse-primary": "#006970",
+                        "inverse-surface": "#dee2ee",
+                        "secondary-container": "#feb700",
+                        "on-primary": "#00363a",
+                        "error-container": "#93000a",
+                        "background": "#0f141b",
+                        "primary": "#dbfcff",
+                        "on-secondary-container": "#6b4b00",
+                        "primary-fixed": "#7df4ff",
+                        "surface-tint": "#00dbe9",
+                        "on-secondary-fixed": "#271900",
+                        "secondary": "#ffdb9d",
+                        "tertiary-fixed": "#ffdad5",
+                        "surface-container-high": "#252a33",
+                        "on-tertiary": "#690003",
+                        "secondary-fixed-dim": "#ffba20",
+                        "on-surface": "#dee2ee",
+                        "on-tertiary-container": "#c1000a",
+                        "surface": "#0f141b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin": "24px",
+                        "container-max": "100%",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "status-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-base": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "status-sm": ["10px", { "lineHeight": "12px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-base": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "data-mono": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Scanline Overlay */
+        .scanlines {
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        /* Ambient Radar Animation */
+        @keyframes radar-spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        .radar-sweep {
+            background: conic-gradient(from 0deg, transparent 70%, rgba(0, 240, 255, 0.15) 100%);
+            animation: radar-spin 4s linear infinite;
+            transform-origin: center center;
+        }
+
+        /* Flicker Animation */
+        @keyframes flicker {
+            0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; }
+            20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.4; }
+        }
+        .animate-flicker {
+            animation: flicker 4s infinite;
+        }
+
+        /* Custom Input Styling */
+        input:focus {
+            box-shadow: 0 1px 10px rgba(0, 240, 255, 0.3);
+            border-color: #00f0ff !important;
+        }
+    </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface h-screen w-screen overflow-hidden flex items-center justify-center relative font-body-base">
+<!-- Background Environment -->
+<div class="absolute inset-0 z-0 overflow-hidden">
+<!-- Digital Grid -->
+<div class="absolute inset-0" style="background-image: linear-gradient(to right, #252D3A 1px, transparent 1px), linear-gradient(to bottom, #252D3A 1px, transparent 1px); background-size: 32px 32px; opacity: 0.4;"></div>
+<!-- Radar Ring System -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-outline-variant/30 opacity-50"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-outline-variant/20 opacity-40"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-outline-variant/10 opacity-30"></div>
+<!-- Radar Crosshairs -->
+<div class="absolute top-1/2 left-0 w-full h-[1px] bg-outline-variant/20 -translate-y-1/2"></div>
+<div class="absolute top-0 left-1/2 h-full w-[1px] bg-outline-variant/20 -translate-x-1/2"></div>
+<!-- Radar Sweep -->
+<div class="absolute top-1/2 left-1/2 w-[800px] h-[800px] rounded-full radar-sweep"></div>
+<!-- Radial Vignette -->
+<div class="absolute inset-0" style="background: radial-gradient(circle at center, transparent 30%, #090e16 80%);"></div>
+</div>
+<!-- Scanline Overlay (Global) -->
+<div class="absolute inset-0 z-50 scanlines opacity-50 mix-blend-overlay"></div>
+<!-- Background Terminal Logs (Decorative) -->
+<div class="absolute top-margin left-margin bottom-margin w-64 hidden md:flex flex-col gap-1 overflow-hidden z-10 opacity-40">
+<div class="text-status-sm font-status-sm text-primary-fixed-dim/70 tracking-widest uppercase border-b border-outline-variant/30 pb-1 mb-2">System Diagnostics</div>
+<div class="text-status-sm font-status-sm text-on-surface-variant flex flex-col gap-1" id="terminal-log">
+<!-- Logs injected via JS -->
+</div>
+</div>
+<!-- Main Login Card (Badge/ID Style) -->
+<main class="relative z-20 w-full max-w-[420px] mx-gutter flex flex-col gap-4">
+<!-- HUD Targeting Brackets -->
+<div class="absolute -top-4 -left-4 w-4 h-4 border-t border-l border-primary-container/50"></div>
+<div class="absolute -top-4 -right-4 w-4 h-4 border-t border-r border-primary-container/50"></div>
+<div class="absolute -bottom-4 -left-4 w-4 h-4 border-b border-l border-primary-container/50"></div>
+<div class="absolute -bottom-4 -right-4 w-4 h-4 border-b border-r border-primary-container/50"></div>
+<!-- The Card -->
+<div class="bg-surface/80 backdrop-blur-xl border border-outline-variant rounded-DEFAULT shadow-[0_0_30px_rgba(0,240,255,0.05)] overflow-hidden relative">
+<!-- Card Header Area -->
+<div class="bg-surface-container h-24 p-gutter border-b border-outline-variant flex items-start justify-between relative overflow-hidden">
+<!-- Inner glow -->
+<div class="absolute inset-0 bg-gradient-to-b from-primary-container/5 to-transparent"></div>
+<div class="flex items-center gap-3 relative z-10">
+<!-- Agency Logo Placeholder -->
+<div class="w-12 h-12 bg-surface border border-outline-variant rounded-sm flex items-center justify-center p-1">
+<img class="w-full h-full object-contain filter grayscale contrast-150" data-alt="A striking minimalist logo design for a fictional classified intelligence agency named KRAKEN. The logo features a highly stylized, geometric, abstract representation of a squid or kraken tentacle, rendered in sharp, glowing cyan (primary-container) lines against a dark graphite background. The design is strictly cyber-technical, avoiding organic curves in favor of angular, aggressive vectors. It exudes a sense of elite security, precision, and technological dominance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVfK7lIaHGsRtrGsV3tgePYe4lJiJOcu-nt7MP_o6Vu87x90b3wXTs8lBGrjhSX3vU4EOXt4HVqpix4TlQDMB8GMwaBw5e1fXZ91sIEk-053bVzJ2iERETzYZ3JcLtIA3gvMModU46W2MG7RP8-PNPm5_45GCypbtfJxpNy3f8gQXpdCz4gknSqSB-QGsoCzpYUY9M4MQUd6f7BxQ0SHJG-QOP2tJGVNC-fmZ4r_paJ5lhU-lDdj5A">
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold tracking-tighter text-on-surface">KRAKEN</h1>
+<div class="text-status-sm font-status-sm text-primary-fixed-dim uppercase tracking-widest mt-0.5">Global Intel Network</div>
+</div>
+</div>
+<div class="text-status-sm font-status-sm text-on-surface-variant text-right relative z-10">
+<div>SCAN ID</div>
+<div class="text-primary-container animate-flicker">SYS-AUTH-992</div>
+</div>
+</div>
+<!-- Card Body Area -->
+<div class="p-margin flex flex-col gap-6 relative">
+<!-- Status Banner -->
+<div class="bg-error/10 border border-error/50 rounded-sm py-2 px-3 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-error text-[16px]" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="text-status-sm font-status-sm text-error uppercase tracking-widest">Security Level: Omega - Restricted</span>
+</div>
+<!-- Form Fields -->
+<form class="flex flex-col gap-5 mt-2" onsubmit="event.preventDefault(); initiateHandshake();">
+<!-- Clearance ID -->
+<div class="flex flex-col gap-1.5 group relative">
+<label class="text-label-caps font-label-caps text-on-surface-variant flex justify-between" for="clearance_id">
+<span>Clearance ID</span>
+<span class="material-symbols-outlined text-[14px] opacity-0 group-focus-within:opacity-100 text-primary-container transition-opacity">vpn_key</span>
+</label>
+<input autocomplete="off" class="bg-transparent border-0 border-b border-outline-variant text-data-mono font-data-mono text-primary-container px-1 py-2 focus:ring-0 focus:border-primary-container transition-all placeholder:text-outline-variant/50" id="clearance_id" placeholder="AXX-993-████" spellcheck="false" type="text">
+</div>
+<!-- Biometric Key -->
+<div class="flex flex-col gap-1.5 group relative">
+<label class="text-label-caps font-label-caps text-on-surface-variant flex justify-between" for="biometric_key">
+<span>Biometric Hash</span>
+<span class="material-symbols-outlined text-[14px] opacity-0 group-focus-within:opacity-100 text-primary-container transition-opacity">fingerprint</span>
+</label>
+<input autocomplete="off" class="bg-transparent border-0 border-b border-outline-variant text-data-mono font-data-mono text-primary-container px-1 py-2 focus:ring-0 focus:border-primary-container transition-all placeholder:text-outline-variant/50" id="biometric_key" placeholder="••••••••••••••••" type="password">
+</div>
+<!-- Action Button -->
+<button class="mt-4 w-full bg-primary-container text-on-primary-container font-label-caps text-label-caps tracking-widest py-3.5 rounded-sm hover:bg-primary-fixed hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all flex items-center justify-center gap-2 border border-transparent hover:border-primary-fixed relative overflow-hidden group" id="auth-btn" type="submit">
+<span class="relative z-10 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">login</span>
+                            INITIATE HANDSHAKE
+                        </span>
+<!-- Hover Effect Overlay -->
+<div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+</button>
+</form>
+</div>
+<!-- Bottom Accent Line -->
+<div class="h-1 w-full bg-gradient-to-r from-transparent via-primary-container/50 to-transparent"></div>
+</div>
+<!-- System Status Footer -->
+<div class="flex justify-between items-center px-2 text-status-sm font-status-sm text-outline">
+<div class="flex items-center gap-1.5">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse shadow-[0_0_5px_rgba(0,240,255,0.8)]"></div>
+                UPLINK SECURE
+            </div>
+<div class="uppercase">Node: K-77X</div>
+</div>
+</main>
+<script>
+        // Decorative Terminal Log Script
+        const logs = [
+            "INIT SYNC protocol... OK",
+            "Checking encryption keys...",
+            "RSA-4096 signature VERIFIED",
+            "Establishing secure tunnel via node [44.192.x.x]",
+            "Awaiting user credentials...",
+            "WARNING: Unauthorized access will be logged.",
+            "Radar sweep active. Monitoring sector 7G.",
+            "Database connection: STABLE",
+            "Memory integrity: 100%"
+        ];
+
+        const logContainer = document.getElementById('terminal-log');
+        let logIndex = 0;
+
+        function addLog() {
+            if (logIndex < logs.length && logContainer) {
+                const el = document.createElement('div');
+                el.textContent = `> ${logs[logIndex]}`;
+                el.className = "opacity-0 transition-opacity duration-300";
+                logContainer.appendChild(el);
+                
+                // Trigger reflow and fade in
+                setTimeout(() => el.classList.remove('opacity-0'), 50);
+                
+                // Keep only last 8 logs
+                if (logContainer.children.length > 8) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+                
+                logIndex++;
+                setTimeout(addLog, Math.random() * 1500 + 500);
+            }
+        }
+        
+        setTimeout(addLog, 1000);
+
+        // Simulated Authentication Interaction
+        function initiateHandshake() {
+            const btn = document.getElementById('auth-btn');
+            
+            btn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span> VERIFYING HASH...`;
+            btn.classList.remove('bg-primary-container', 'text-on-primary-container');
+            btn.classList.add('bg-surface-variant', 'text-primary-container', 'border-primary-container', 'animate-pulse');
+            
+            setTimeout(() => {
+                btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">lock_open</span> ACCESS GRANTED`;
+                btn.classList.remove('bg-surface-variant', 'text-primary-container', 'border-primary-container', 'animate-pulse');
+                btn.classList.add('bg-primary', 'text-on-primary', 'shadow-[0_0_20px_rgba(219,252,255,0.6)]');
+                
+                // REDIRECT LOGIC: Access Granted ke 1 second baad Command page par bhej dega
+                setTimeout(() => {
+                    window.location.href = "/command";
+                }, 1000);
+                
+            }, 2000);
+        }
+    </script>
+</body></html>

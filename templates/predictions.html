@@ -1,0 +1,229 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kraken - AI Predictions</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-highest": "#30353e", "tertiary-container": "#ffcec7", "on-primary-container": "#006970",
+                      "on-error-container": "#ffdad6", "on-secondary-fixed-variant": "#5e4200", "surface-bright": "#343942",
+                      "tertiary": "#fff3f1", "on-background": "#dee2ee", "on-secondary": "#412d00", "surface-container-lowest": "#090e16",
+                      "primary-container": "#00f0ff", "tertiary-fixed-dim": "#ffb4aa", "surface-dim": "#0f141b", "on-surface-variant": "#b9cacb",
+                      "on-tertiary-fixed": "#410001", "secondary-fixed": "#ffdea8", "error": "#ffb4ab", "outline-variant": "#3b494b",
+                      "primary-fixed-dim": "#00dbe9", "inverse-on-surface": "#2c3139", "on-primary-fixed-variant": "#004f54",
+                      "on-primary-fixed": "#002022", "on-error": "#690005", "outline": "#849495", "surface-container": "#1b2028",
+                      "surface-variant": "#30353e", "surface-container-low": "#171c24", "on-tertiary-fixed-variant": "#930005",
+                      "inverse-primary": "#006970", "inverse-surface": "#dee2ee", "secondary-container": "#feb700", "on-primary": "#00363a",
+                      "error-container": "#93000a", "background": "#0f141b", "primary": "#dbfcff", "on-secondary-container": "#6b4b00",
+                      "primary-fixed": "#7df4ff", "surface-tint": "#00dbe9", "on-secondary-fixed": "#271900", "secondary": "#ffdb9d",
+                      "tertiary-fixed": "#ffdad5", "surface-container-high": "#252a33", "on-tertiary": "#690003", "secondary-fixed-dim": "#ffba20",
+                      "on-surface": "#dee2ee", "on-tertiary-container": "#c1000a", "surface": "#0f141b"
+              },
+              "fontFamily": { "status-sm": ["JetBrains Mono"], "data-mono": ["JetBrains Mono"], "label-caps": ["JetBrains Mono"] }
+            }
+          }
+        }
+    </script>
+<style>
+        .scan-line { background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(0, 240, 255, 0.05) 50%, rgba(0, 240, 255, 0)); background-size: 100% 4px; pointer-events: none; }
+        .flicker { animation: textFlicker 3s infinite alternate; }
+        @keyframes textFlicker { 0%, 20%, 62%, 100% { opacity: 1; } 21%, 63% { opacity: 0.4; } }
+        .bg-grid { background-image: linear-gradient(to right, #252D3A 1px, transparent 1px), linear-gradient(to bottom, #252D3A 1px, transparent 1px); background-size: 24px 24px; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f141b; }
+        ::-webkit-scrollbar-thumb { background: #3b494b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen overflow-hidden selection:bg-secondary-container selection:text-[#412d00]">
+<div class="fixed inset-0 scan-line z-50 pointer-events-none mix-blend-screen opacity-50"></div>
+
+<!-- Top Navbar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-surface/90 backdrop-blur-md border-b border-outline-variant text-secondary-container">
+    <div class="flex items-center gap-4">
+        <div class="text-[24px] font-bold tracking-tighter text-secondary-container">Kraken</div>
+        <div class="relative hidden md:flex items-center ml-4">
+            <span class="material-symbols-outlined absolute left-2 text-on-surface-variant text-[18px]">search</span>
+            <input class="bg-surface-container-low border border-outline-variant text-[12px] font-mono text-on-surface pl-8 pr-3 py-1.5 focus:border-secondary-container focus:outline-none w-64 placeholder:text-on-surface-variant/50 transition-colors" placeholder="SEARCH PREDICTIONS..." type="text">
+            <div class="absolute right-2 top-2 w-1.5 h-1.5 bg-secondary-container animate-pulse rounded-full opacity-70"></div>
+        </div>
+    </div>
+    <div class="flex items-center gap-4">
+        <span class="text-[11px] font-mono text-secondary-container tracking-widest hidden lg:block border border-secondary-container/30 px-2 py-0.5 bg-secondary-container/5">CLEARANCE: OMEGA</span>
+        <div class="flex items-center gap-1">
+            <button class="p-2 text-on-surface-variant hover:text-secondary-container transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
+            <button class="p-2 text-on-surface-variant hover:text-secondary-container transition-colors"><span class="material-symbols-outlined text-[20px]">settings</span></button>
+        </div>
+        <div class="w-px h-6 bg-outline-variant mx-2"></div>
+        <a href="/"><button class="text-[12px] font-mono text-secondary-container border border-secondary-container/50 px-3 py-1 hover:bg-secondary-container hover:text-[#412d00] transition-colors">SECURE LOGOUT</button></a>
+    </div>
+</header>
+
+<!-- Main Sidebar -->
+<nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col z-40 bg-surface-container-low border-r border-outline-variant text-secondary-fixed">
+    <div class="p-4 border-b border-outline-variant/50 flex items-center gap-3 bg-surface-container">
+        <div class="w-8 h-8 border border-secondary-container/30 bg-surface-dim flex items-center justify-center relative">
+            <div class="absolute inset-0 bg-secondary-container/10 animate-pulse"></div>
+            <span class="material-symbols-outlined text-secondary-container text-[16px]">psychology</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-[11px] font-mono text-secondary-fixed leading-tight">Kraken v4.0</span>
+            <span class="text-[10px] font-mono text-outline flicker leading-tight mt-0.5">PREDICTIVE ENGINE</span>
+        </div>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto py-2 flex flex-col gap-0.5 text-[11px] font-mono">
+        <a href="/command" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="tracking-widest">Command</span></a>
+        <a href="/network" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">hub</span><span class="tracking-widest">Network</span></a>
+        
+        <!-- Active Tab -->
+        <a href="/predictions" class="flex items-center gap-3 text-secondary-container bg-surface-container-highest border-l-4 border-secondary-container px-4 py-3 group relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-secondary-container/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <span class="material-symbols-outlined text-[18px]">psychology</span><span class="tracking-widest">Predictions</span>
+        </a>
+        
+        <a href="/syndicates" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">groups</span><span class="tracking-widest">Syndicates</span></a>
+        <a href="/intake" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">upload_file</span><span class="tracking-widest">Intake</span></a>
+        <a href="/profile" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">person_search</span><span class="tracking-widest">Profiles</span></a>
+        <a href="/reports" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">description</span><span class="tracking-widest">Reports</span></a>
+    </div>
+</nav>
+
+<!-- 💥 BULLETPROOF SCROLL AREA (Absolute positioning se block kiya hua) 💥 -->
+<main class="absolute top-16 left-64 w-[calc(100%-16rem)] h-[calc(100vh-4rem)] overflow-y-auto bg-grid bg-background" style="overflow-y: scroll !important;">
+    <div class="p-6 max-w-5xl mx-auto flex flex-col gap-6 pb-20">
+        
+        <!-- Top Stats -->
+        <div class="grid grid-cols-3 gap-6 shrink-0">
+            <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4">
+                <span class="material-symbols-outlined text-secondary-container text-[28px] opacity-80">psychology_alt</span>
+                <div>
+                    <div class="text-[10px] font-label-caps tracking-widest text-outline-variant">AI CONFIDENCE LEVEL</div>
+                    <div class="text-[20px] font-data-mono font-bold text-white mt-1">99.0%</div>
+                </div>
+            </div>
+            <div class="bg-surface-container-low border border-error/50 p-4 flex items-center gap-4 shadow-[0_0_15px_rgba(255,180,171,0.1)]">
+                <span class="material-symbols-outlined text-error text-[28px] animate-pulse">warning</span>
+                <div>
+                    <div class="text-[10px] font-label-caps tracking-widest text-outline-variant">CRITICAL LINKS</div>
+                    <div class="text-[20px] font-data-mono font-bold text-error mt-1" id="threat-count">...</div>
+                </div>
+            </div>
+            <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4">
+                <span class="material-symbols-outlined text-primary-container text-[28px] opacity-80">memory</span>
+                <div>
+                    <div class="text-[10px] font-label-caps tracking-widest text-outline-variant">ENGINE SYNC</div>
+                    <div class="text-[20px] font-data-mono font-bold text-white mt-1">LIVE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictions List Container -->
+        <div class="flex flex-col gap-4" id="predictions-container">
+            <!-- Loading State -->
+            <div class="w-full bg-surface border border-outline-variant p-10 text-center text-outline-variant font-data-mono text-[13px] animate-pulse">
+                <span class="material-symbols-outlined block text-[36px] mb-4 text-secondary-container/50">radar</span>
+                SCANNING Kraken GRAPH DB...
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    async function loadPredictions() {
+        try {
+            const response = await fetch('/api/graph-data');
+            const data = await response.json();
+            
+            const container = document.getElementById('predictions-container');
+            const countDisplay = document.getElementById('threat-count');
+            
+            if (data.status === "success" && data.predictions) {
+                const preds = data.predictions;
+                countDisplay.innerText = preds.length;
+                
+                if (preds.length === 0) {
+                    container.innerHTML = `
+                        <div class="w-full bg-surface border border-secondary-container/30 p-8 text-center text-secondary-container font-data-mono text-[12px]">
+                            <span class="material-symbols-outlined block text-[32px] mb-2">check_circle</span>
+                            SYSTEM NOMINAL. NO NEW CRITICAL THREATS DETECTED.
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = ''; 
+
+                preds.forEach((pred, index) => {
+                    const src = pred.source;
+                    const tgt = pred.target;
+                    const reason = pred.reasoning;
+                    const displayConf = pred.confidence;
+
+                    const isHighRisk = displayConf >= 90;
+                    const borderColor = isHighRisk ? 'border-error/50' : 'border-secondary-container/50';
+                    const textColor = isHighRisk ? 'text-error' : 'text-secondary-container';
+                    const bgPulse = isHighRisk ? 'bg-error' : 'bg-secondary-container';
+                    const icon = isHighRisk ? 'warning' : 'priority_high';
+                    
+                    const cardHTML = `
+                        <div class="bg-surface border ${borderColor} flex flex-col hover:border-${isHighRisk ? 'error' : 'secondary-container'} transition-colors">
+                            
+                            <div class="bg-surface-container-low px-4 py-2 border-b border-outline-variant/50 flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[16px] ${textColor} ${isHighRisk ? 'flicker' : ''}">${icon}</span>
+                                    <span class="text-[11px] font-label-caps font-bold tracking-widest ${textColor} uppercase">ALERT #${1000 + index}</span>
+                                </div>
+                                <span class="text-[10px] font-data-mono ${textColor} bg-${isHighRisk ? 'error' : 'secondary-container'}/10 px-2 py-0.5 border border-${borderColor}">CONFIDENCE: ${displayConf.toFixed(1)}%</span>
+                            </div>
+                            
+                            <div class="p-4 flex items-center justify-between gap-4">
+                                <div class="flex-1 bg-[#0a0d12] border border-outline-variant/50 p-3 text-center relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 w-1 h-full ${bgPulse}/50"></div>
+                                    <span class="text-[9px] font-label-caps text-outline-variant block mb-1 tracking-widest">NODE A (SOURCE)</span>
+                                    <span class="text-[13px] font-data-mono font-bold text-white truncate block">${src}</span>
+                                </div>
+                                
+                                <div class="flex flex-col items-center justify-center w-20 shrink-0 relative">
+                                    <span class="text-[9px] font-label-caps ${textColor} mb-1 tracking-widest">AI LINK</span>
+                                    <div class="w-full h-px bg-outline-variant relative">
+                                        <div class="absolute top-0 left-0 h-full w-full ${bgPulse} animate-pulse shadow-[0_0_8px_currentColor]"></div>
+                                    </div>
+                                    <span class="material-symbols-outlined text-[16px] ${textColor} absolute bg-surface px-1">link</span>
+                                </div>
+
+                                <div class="flex-1 bg-[#0a0d12] border border-outline-variant/50 p-3 text-center relative overflow-hidden">
+                                    <div class="absolute top-0 right-0 w-1 h-full ${bgPulse}/50"></div>
+                                    <span class="text-[9px] font-label-caps text-outline-variant block mb-1 tracking-widest">NODE B (TARGET)</span>
+                                    <span class="text-[13px] font-data-mono font-bold text-white truncate block">${tgt}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="px-4 py-2 bg-surface-container-highest border-t border-outline-variant/30 text-[11px] font-data-mono flex gap-2 items-start">
+                                <span class="material-symbols-outlined text-[14px] text-outline mt-[1px]">info</span>
+                                <span class="text-on-surface-variant leading-tight"><strong class="${textColor} font-data-mono font-normal">REASONING:</strong> ${reason}</span>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += cardHTML;
+                });
+            }
+        } catch (error) {
+            console.error("Error loading predictions:", error);
+            document.getElementById('predictions-container').innerHTML = `<div class="p-4 text-error font-data-mono text-center border border-error bg-error/10">ERROR FETCHING DB.</div>`;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadPredictions);
+</script>
+</body></html>

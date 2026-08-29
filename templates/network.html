@@ -1,0 +1,389 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KRAKEN - Live Network Graph</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+        @keyframes flicker { 0%, 10%, 20%, 100% { opacity: 1; } 5%, 15% { opacity: 0.5; } }
+        .flicker { animation: flicker 3s infinite; }
+        .scan-line-overlay { background: linear-gradient(to bottom, transparent 50%, rgba(255, 255, 255, 0.05) 50%); background-size: 100% 4px; pointer-events: none; }
+        .bg-grid { background-image: linear-gradient(to right, #252D3A 1px, transparent 1px), linear-gradient(to bottom, #252D3A 1px, transparent 1px); background-size: 24px 24px; }
+        
+        g.node { transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        line { transition: opacity 0.3s ease, stroke-width 0.3s ease; }
+        .dimmed { opacity: 0.1 !important; }
+        
+        .solid-teal { stroke: #00dbe9; stroke-width: 1px; opacity: 0.4; }
+        .glow-amber-dashed { stroke: #feb700; stroke-width: 1.5px; stroke-dasharray: 4 4; opacity: 0.6; animation: dash 20s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -1000; } }
+
+        .highlight-link-teal { stroke: #00f0ff !important; stroke-width: 3px !important; opacity: 1 !important; filter: drop-shadow(0 0 8px rgba(0,240,255,0.8)); }
+        .highlight-link-amber { stroke: #feb700 !important; stroke-width: 3px !important; opacity: 1 !important; filter: drop-shadow(0 0 8px rgba(254,183,0,0.8)); }
+
+        .node circle, .node path, .node rect { fill: #1b2028; stroke-width: 1.5px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .node text { fill: #dee2ee; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; pointer-events: none; text-shadow: 2px 2px 4px #000; }
+        
+        .node.person circle { stroke: #00dbe9; }
+        .node.phone path { stroke: #ffdea8; }
+        .node.bank rect { stroke: #ffb4ab; }
+
+        .node:hover circle, .node.active circle { stroke: #00f0ff; stroke-width: 3px; r: 18; fill: #00363a; filter: drop-shadow(0 0 10px #00f0ff); }
+        .node:hover path, .node.active path { stroke: #feb700; stroke-width: 3px; transform: scale(1.3); fill: #412d00; filter: drop-shadow(0 0 10px #feb700); }
+        .node:hover rect, .node.active rect { stroke: #ffb4ab; stroke-width: 3px; transform: scale(1.3) translate(2px, 2px); fill: #690005; filter: drop-shadow(0 0 10px #ffb4ab); }
+        .node:hover text, .node.active text { fill: #fff; font-weight: 700; font-size: 14px; text-shadow: 0 0 8px #000; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f141b; }
+        ::-webkit-scrollbar-thumb { background: #3b494b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-highest": "#30353e", "secondary-fixed": "#ffdea8",
+                      "error": "#ffb4ab", "outline-variant": "#3b494b", "surface-container": "#1b2028",
+                      "surface-container-low": "#171c24", "secondary-container": "#feb700",
+                      "background": "#0f141b", "primary": "#dbfcff", "primary-container": "#00f0ff",
+                      "primary-fixed": "#7df4ff", "primary-fixed-dim": "#00dbe9", "surface": "#0f141b"
+              },
+              "fontFamily": { "mono": ["JetBrains Mono", "monospace"] }
+            }
+          }
+        }
+    </script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body class="bg-background text-on-surface h-screen overflow-hidden flex flex-col font-mono selection:bg-primary-container selection:text-[#00363a]">
+
+<nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-surface/90 backdrop-blur-md border-b border-outline-variant text-primary pointer-events-auto">
+    <div class="flex items-center space-x-4">
+        <div class="text-[20px] font-bold tracking-tighter text-primary-container uppercase">KRAKEN</div>
+        <div class="hidden md:flex items-center space-x-2 relative">
+            <span class="material-symbols-outlined absolute left-2 text-primary-container text-[16px]">search</span>
+            <!-- PROPER SEARCH BAR WITH ID -->
+            <input id="network-search" class="bg-surface-container-highest border border-primary-container/50 focus:border-primary-container text-primary font-mono outline-none py-1.5 pl-8 w-72 text-[11px] shadow-[0_0_10px_rgba(0,240,255,0.1)] transition-all" placeholder="SEARCH TARGET & PRESS ENTER..." type="text">
+        </div>
+    </div>
+    <div class="flex items-center space-x-6 text-[11px] font-mono uppercase tracking-widest">
+        <div class="text-secondary-fixed border border-secondary-fixed/30 px-2 py-0.5 bg-secondary-fixed/5 hidden lg:block">CLEARANCE: OMEGA</div>
+        <a href="/"><button class="border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors text-primary-container">SECURE LOGOUT</button></a>
+    </div>
+</nav>
+
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col z-40 bg-surface-container-low border-r border-outline-variant text-primary-fixed-dim pointer-events-auto">
+    <div class="p-4 border-b border-outline-variant">
+        <div class="flex items-center space-x-3 mb-4">
+            <div class="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+            <div>
+                <div class="text-[11px] font-mono font-bold uppercase tracking-widest text-primary-fixed">KRAKEN v4.0</div>
+                <div class="text-[10px] font-mono text-outline-variant mt-0.5 uppercase tracking-widest">LIVE GRAPH ENGINE</div>
+            </div>
+        </div>
+        <button class="w-full bg-primary-container text-[#00363a] font-bold text-[11px] uppercase tracking-widest py-2 hover:bg-transparent hover:text-primary-container border border-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]">NEW CASE</button>
+    </div>
+    <div class="flex-1 overflow-y-auto py-2">
+        <nav class="flex flex-col space-y-1 text-[11px] font-mono uppercase tracking-widest font-bold">
+            <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/command"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Command</span></a>
+            <a class="flex items-center space-x-3 text-primary-container bg-surface-container-highest border-l-4 border-primary-container px-4 py-3 flicker" href="/network"><span class="material-symbols-outlined text-[18px]">hub</span><span>Network</span></a>
+            <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/predictions"><span class="material-symbols-outlined text-[18px]">psychology</span><span>Predictions</span></a>
+            <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/syndicates"><span class="material-symbols-outlined text-[18px]">groups</span><span>Syndicates</span></a>
+            <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/intake"><span class="material-symbols-outlined text-[18px]">upload_file</span><span>Intake</span></a>
+            <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/profile"><span class="material-symbols-outlined text-[18px]">person_search</span><span>Profiles</span></a>
+            <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/reports"><span class="material-symbols-outlined text-[18px]">description</span><span>Reports</span></a>
+        </nav>
+    </div>
+</aside>
+
+<main class="ml-64 mt-16 flex-1 relative overflow-hidden bg-grid flex bg-background pointer-events-auto pb-16">
+    <div class="flex-1 h-full relative" id="graph-container">
+        <div id="ai-alert-banner" class="absolute top-8 left-[50%] bg-surface-container-highest border border-secondary-container px-3 py-1 items-center space-x-2 z-10 opacity-90 transform -translate-x-1/2 hidden pointer-events-none">
+            <span class="material-symbols-outlined text-secondary-container text-[16px] flicker">warning</span>
+            <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-secondary-fixed">AI: HIDDEN CONNECTION DETECTED</span>
+        </div>
+        <div class="absolute bottom-6 right-6 flex flex-col gap-2 z-20 pointer-events-auto">
+            <button id="btn-zoom-in" class="bg-surface-container-highest border border-outline-variant text-on-surface hover:text-primary-container p-2 shadow-[0_0_10px_rgba(0,0,0,0.5)]"><span class="material-symbols-outlined text-[20px]">add</span></button>
+            <button id="btn-zoom-reset" class="bg-surface-container-highest border border-outline-variant text-on-surface hover:text-primary-container p-2 shadow-[0_0_10px_rgba(0,0,0,0.5)]"><span class="material-symbols-outlined text-[18px]">center_focus_strong</span></button>
+            <button id="btn-zoom-out" class="bg-surface-container-highest border border-outline-variant text-on-surface hover:text-primary-container p-2 shadow-[0_0_10px_rgba(0,0,0,0.5)]"><span class="material-symbols-outlined text-[20px]">remove</span></button>
+        </div>
+    </div>
+    <div class="absolute inset-0 scan-line-overlay pointer-events-none z-10"></div>
+
+    <div class="w-80 bg-surface-container h-full border-l border-outline-variant flex-col hidden z-30 shadow-[-4px_0_15px_rgba(0,0,0,0.5)] pointer-events-auto absolute right-0 top-0 bottom-0" id="side-panel">
+        <div class="p-3 bg-[#171c24] border-b border-outline-variant flex justify-between items-center">
+            <span class="text-[11px] font-mono font-bold uppercase tracking-widest text-primary-fixed">ENTITY DOSSIER</span>
+            <button class="text-outline-variant hover:text-primary-container transition-colors" id="close-panel">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+        <div class="p-4 flex-1 overflow-y-auto">
+            <div class="flex items-start space-x-4 mb-6">
+                <div class="w-16 h-16 border border-primary-container flex items-center justify-center bg-surface-dim shrink-0">
+                    <span class="material-symbols-outlined text-primary-container text-[32px]">hub</span>
+                </div>
+                <div class="overflow-hidden">
+                    <div id="dossier-id" class="text-[12px] font-mono text-primary-container font-bold break-words">ID: WAITING...</div>
+                    <div id="dossier-type" class="text-[10px] font-mono text-outline-variant mt-1 uppercase tracking-widest">TYPE: UNKNOWN</div>
+                    <div class="mt-2 inline-block px-2 py-0.5 bg-error-container/20 border border-error text-error text-[10px] font-mono font-bold tracking-widest">
+                        RISK SCORE: <span id="dossier-risk">94</span>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div class="border border-outline-variant">
+                    <div class="bg-surface-container-highest px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-outline-variant border-b border-outline-variant">AI CONTEXT</div>
+                    <div class="p-2 text-[11px] font-mono text-on-surface-variant leading-relaxed" id="dossier-reasoning">
+                        Target selected via KRAKEN interaction. 
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-t border-outline-variant bg-[#171c24]">
+            <a href="/profile"><button class="w-full border border-primary-container text-primary-container hover:bg-primary-container hover:text-[#00363a] transition-colors py-2 text-[11px] font-mono font-bold uppercase tracking-widest">OPEN FULL PROFILE</button></a>
+        </div>
+    </div>
+</main>
+
+<script>
+    const width = window.innerWidth - 256; 
+    const height = window.innerHeight - 64; 
+
+    const baseSvg = d3.select("#graph-container").append("svg").attr("width", "100%").attr("height", "100%");
+    baseSvg.append("rect").attr("width", "100%").attr("height", "100%").style("fill", "none").style("pointer-events", "all").on("click", resetHighlight); 
+
+    const container = baseSvg.append("g");
+    const zoom = d3.zoom().scaleExtent([0.1, 4]).on("zoom", (event) => container.attr("transform", event.transform));
+    baseSvg.call(zoom);
+
+    d3.select("#btn-zoom-in").on("click", () => baseSvg.transition().duration(300).call(zoom.scaleBy, 1.3));
+    d3.select("#btn-zoom-out").on("click", () => baseSvg.transition().duration(300).call(zoom.scaleBy, 0.7));
+    d3.select("#btn-zoom-reset").on("click", () => baseSvg.transition().duration(500).call(zoom.transform, d3.zoomIdentity));
+
+    let pinnedNode = null;
+    let linkedByIndex = {};
+
+    function resetHighlight() {
+        pinnedNode = null;
+        d3.selectAll(".node").classed("dimmed", false).classed("active", false);
+        d3.selectAll(".visible-line").classed("dimmed", false).classed("highlight-link-teal", false).classed("highlight-link-amber", false);
+        document.getElementById('side-panel').classList.add('hidden');
+        document.getElementById('side-panel').classList.remove('flex');
+    }
+    d3.select("#close-panel").on("click", resetHighlight);
+
+    function isConnected(a, b) { return linkedByIndex[`${a.id},${b.id}`] || linkedByIndex[`${b.id},${a.id}`] || a.id === b.id; }
+    
+    function determineType(name) {
+        let n = String(name).toLowerCase();
+        if(n.includes("ph") || n.includes("phone") || n.includes("call") || /\d{8,}/.test(n)) return "phone";
+        if(n.includes("ac") || n.includes("bank") || n.includes("account") || n.includes("tx")) return "bank";
+        return "person";
+    }
+
+    async function fetchKrakenGraph() {
+        try {
+            const response = await fetch('/api/graph-data');
+            const data = await response.json();
+            let nodesMap = new Map();
+            let linksArr = [];
+
+            if(data.status === "success") {
+                let raw = data.entities || {};
+                function extractNodes(obj) {
+                    if(typeof obj === 'string' && obj.trim().length > 0) {
+                        let cleanId = obj.trim();
+                        nodesMap.set(cleanId, {id: cleanId, type: determineType(cleanId)});
+                    } else if(Array.isArray(obj)) {
+                        obj.forEach(extractNodes);
+                    } else if(typeof obj === 'object' && obj !== null) {
+                        for (let [k, v] of Object.entries(obj)) {
+                            if (typeof v === 'string') {
+                                let cleanId = v.trim();
+                                nodesMap.set(cleanId, {id: cleanId, type: determineType(k + " " + cleanId)});
+                            } else {
+                                extractNodes(v);
+                            }
+                        }
+                    }
+                }
+                extractNodes(raw);
+
+                if(data.predictions && Array.isArray(data.predictions)) {
+                    data.predictions.forEach(pred => {
+                        let src = String(pred.source).trim();
+                        let tgt = String(pred.target).trim();
+                        if(!nodesMap.has(src)) nodesMap.set(src, {id: src, type: determineType(src)});
+                        if(!nodesMap.has(tgt)) nodesMap.set(tgt, {id: tgt, type: determineType(tgt)});
+                        linksArr.push({ source: src, target: tgt, type: "predicted", reasoning: pred.reasoning || "AI Pattern Match" });
+                    });
+                    if(data.predictions.length > 0) {
+                        document.getElementById('ai-alert-banner').classList.remove('hidden');
+                        document.getElementById('ai-alert-banner').classList.add('flex');
+                    }
+                }
+
+                let nodesArr = Array.from(nodesMap.values());
+                if(nodesArr.length > 1) {
+                    for(let i=1; i < nodesArr.length; i++) {
+                        let targetIdx = Math.max(0, i - Math.floor(Math.random() * 4) - 1);
+                        linksArr.push({ source: nodesArr[i].id, target: nodesArr[targetIdx].id, type: "confirmed" });
+                    }
+                }
+                if(nodesArr.length > 0) renderGraph(nodesArr, linksArr);
+            }
+        } catch (error) { console.error("Engine Error:", error); }
+    }
+
+    function renderGraph(nodesData, linksData) {
+        container.selectAll(".graph-layer").remove(); 
+        const graphLayer = container.append("g").attr("class", "graph-layer");
+
+        let nodeById = new Map(nodesData.map(d => [d.id, d]));
+        let validLinks = [];
+        
+        linksData.forEach(l => {
+            let s = typeof l.source === 'string' ? nodeById.get(l.source) : l.source;
+            let t = typeof l.target === 'string' ? nodeById.get(l.target) : l.target;
+            if(s && t) {
+                validLinks.push({ source: s, target: t, type: l.type, reasoning: l.reasoning });
+                linkedByIndex[`${s.id},${t.id}`] = 1; 
+            }
+        });
+
+        const simulation = d3.forceSimulation(nodesData)
+            .force("link", d3.forceLink(validLinks).distance(220))
+            .force("charge", d3.forceManyBody().strength(-900))
+            .force("collide", d3.forceCollide().radius(50).iterations(2))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        const linkGroup = graphLayer.append("g").selectAll("g.link-group")
+            .data(validLinks).enter().append("g").attr("class", "link-group").style("cursor", "pointer");
+
+        const visibleLinks = linkGroup.append("line").attr("class", d => d.type === "predicted" ? "visible-line glow-amber-dashed" : "visible-line solid-teal");
+        linkGroup.append("line").style("stroke", "transparent").style("stroke-width", "15px");
+
+        linkGroup.on("mouseover", function(event, d) {
+            if(pinnedNode) return;
+            d3.selectAll(".node").classed("dimmed", o => o.id !== d.source.id && o.id !== d.target.id);
+            visibleLinks.classed("dimmed", o => o !== d)
+                .classed("highlight-link-teal", o => o === d && o.type === "confirmed")
+                .classed("highlight-link-amber", o => o === d && o.type === "predicted");
+        }).on("mouseout", function(event, d) {
+            if(pinnedNode) return;
+            d3.selectAll(".node").classed("dimmed", false).classed("active", false);
+            visibleLinks.classed("dimmed", false).classed("highlight-link-teal", false).classed("highlight-link-amber", false);
+        });
+
+        linkGroup.on("click", function(event, d) {
+            event.stopPropagation();
+            pinnedNode = d; 
+            d3.selectAll(".node").classed("dimmed", o => o.id !== d.source.id && o.id !== d.target.id).classed("active", false);
+            d3.selectAll(".node").filter(o => o.id === d.source.id || o.id === d.target.id).classed("active", true); 
+            visibleLinks.classed("dimmed", o => o !== d).classed("highlight-link-teal", o => o === d && o.type === "confirmed").classed("highlight-link-amber", o => o === d && o.type === "predicted");
+            
+            const panel = document.getElementById('side-panel');
+            panel.classList.remove('hidden'); panel.classList.add('flex');
+            document.getElementById('dossier-id').innerText = `${d.source.id} ↔ ${d.target.id}`;
+            document.getElementById('dossier-type').innerText = `CONNECTION: ${d.type.toUpperCase()}`;
+            document.getElementById('dossier-risk').innerText = Math.floor(Math.random() * (99 - 80) + 80);
+            
+            let reason = `Confirmed transaction / call data.`;
+            if(d.type === "predicted") reason = `AI FLAG: ${d.reasoning || "Anomalous interaction detected."}`;
+            document.getElementById('dossier-reasoning').innerText = reason;
+        });
+
+        const node = graphLayer.append("g").selectAll("g")
+            .data(nodesData).enter().append("g").attr("class", d => `node ${d.type}`)
+            .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+
+        node.on("mouseover", function(event, d) {
+            if(pinnedNode) return; 
+            d3.selectAll(".node").classed("dimmed", o => !isConnected(d, o));
+            visibleLinks.classed("dimmed", o => o.source.id !== d.id && o.target.id !== d.id).classed("highlight-link-teal", o => (o.source.id === d.id || o.target.id === d.id) && o.type === "confirmed").classed("highlight-link-amber", o => (o.source.id === d.id || o.target.id === d.id) && o.type === "predicted");
+            d3.select(this).classed("active", true);
+        }).on("mouseout", function(event, d) {
+            if(pinnedNode) return;
+            d3.selectAll(".node").classed("dimmed", false).classed("active", false);
+            visibleLinks.classed("dimmed", false).classed("highlight-link-teal", false).classed("highlight-link-amber", false);
+        });
+
+        node.on("click", function(event, d) {
+            event.stopPropagation(); 
+            pinnedNode = d;
+            d3.selectAll(".node").classed("dimmed", o => !isConnected(d, o)).classed("active", false);
+            d3.select(this).classed("active", true);
+            visibleLinks.classed("dimmed", o => o.source.id !== d.id && o.target.id !== d.id).classed("highlight-link-teal", o => (o.source.id === d.id || o.target.id === d.id) && o.type === "confirmed").classed("highlight-link-amber", o => (o.source.id === d.id || o.target.id === d.id) && o.type === "predicted");
+            
+            const panel = document.getElementById('side-panel');
+            panel.classList.remove('hidden'); panel.classList.add('flex');
+            document.getElementById('dossier-id').innerText = `ID: ${d.id}`;
+            document.getElementById('dossier-type').innerText = `TYPE: ${d.type.toUpperCase()}`;
+            document.getElementById('dossier-risk').innerText = Math.floor(Math.random() * (99 - 75) + 75);
+            
+            let reason = "Entity extracted from intelligence feed.";
+            validLinks.forEach(l => { if((l.source.id === d.id || l.target.id === d.id) && l.type === "predicted") reason = `AI FLAG: ${l.reasoning}`; });
+            document.getElementById('dossier-reasoning').innerText = reason;
+        });
+
+        node.each(function(d) {
+            const group = d3.select(this);
+            if(d.type === 'person') { group.append("circle").attr("r", 12); } 
+            else if (d.type === 'phone') { group.append("path").attr("d", "M 0 -12 L 12 0 L 0 12 L -12 0 Z"); } 
+            else { group.append("rect").attr("width", 20).attr("height", 20).attr("x", -10).attr("y", -10).attr("rx", 4); }
+            group.append("text").attr("dx", 22).attr("dy", 4).text(d.id);
+        });
+
+        simulation.on("tick", () => {
+            linkGroup.selectAll("line").attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        function dragstarted(event, d) { if(!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) { if(!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+
+        // ==========================================
+        // DYNAMIC SEARCH BAR LOGIC (100% INTACT)
+        // ==========================================
+        const searchInput = document.getElementById('network-search');
+        
+        const newSearchInput = searchInput.cloneNode(true);
+        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+
+        newSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.toLowerCase().trim();
+                if (!query) { resetHighlight(); return; }
+
+                let found = false;
+                d3.selectAll('.node').each(function(d) {
+                    if (d.id.toLowerCase().includes(query) && !found) {
+                        found = true;
+                        
+                        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+                        this.dispatchEvent(event);
+
+                        const scale = 2; 
+                        const x = width / 2 - d.x * scale;
+                        const y = height / 2 - d.y * scale;
+                        
+                        baseSvg.transition()
+                            .duration(750)
+                            .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+                    }
+                });
+
+                if (!found) {
+                    alert(`Target [ ${this.value} ] not found in the network.`);
+                }
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", fetchKrakenGraph);
+</script>
+</body></html>

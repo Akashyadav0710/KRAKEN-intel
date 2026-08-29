@@ -1,0 +1,26 @@
+[
+    {
+        "source": "Abhishek Sharma",
+        "target": "AC-884920",
+        "confidence": 0.94,
+        "reasoning": "Hidden communication proxy detected bypassing standard logs."
+    },
+    {
+        "source": "Akash Yadav",
+        "target": "AC-556102",
+        "confidence": 0.98,
+        "reasoning": "CRITICAL MATCH: Entities cross-referenced from live FIR upload."
+    },
+    {
+        "source": "Charita Chowdhury",
+        "target": "+918801823908",
+        "confidence": 0.98,
+        "reasoning": "CRITICAL ALERT: FIR cross-referenced with existing Database."
+    },
+    {
+        "source": "Charita Chowdhury",
+        "target": "+918801823908",
+        "confidence": 0.98,
+        "reasoning": "CRITICAL ALERT: FIR cross-referenced with existing Database."
+    }
+]

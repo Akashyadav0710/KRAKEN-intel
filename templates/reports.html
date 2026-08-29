@@ -1,0 +1,226 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kraken - Automated Case Reports</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-highest": "#30353e", "tertiary-container": "#ffcec7", "on-primary-container": "#006970",
+                      "on-error-container": "#ffdad6", "on-secondary-fixed-variant": "#5e4200", "surface-bright": "#343942",
+                      "tertiary": "#fff3f1", "on-background": "#dee2ee", "on-secondary": "#412d00", "surface-container-lowest": "#090e16",
+                      "primary-container": "#00f0ff", "tertiary-fixed-dim": "#ffb4aa", "surface-dim": "#0f141b", "on-surface-variant": "#b9cacb",
+                      "on-tertiary-fixed": "#410001", "secondary-fixed": "#ffdea8", "error": "#ffb4ab", "outline-variant": "#3b494b",
+                      "primary-fixed-dim": "#00dbe9", "inverse-on-surface": "#2c3139", "on-primary-fixed-variant": "#004f54",
+                      "on-primary-fixed": "#002022", "on-error": "#690005", "outline": "#849495", "surface-container": "#1b2028",
+                      "surface-variant": "#30353e", "surface-container-low": "#171c24", "on-tertiary-fixed-variant": "#930005",
+                      "inverse-primary": "#006970", "inverse-surface": "#dee2ee", "secondary-container": "#feb700", "on-primary": "#00363a",
+                      "error-container": "#93000a", "background": "#0f141b", "primary": "#dbfcff", "on-secondary-container": "#6b4b00",
+                      "primary-fixed": "#7df4ff", "surface-tint": "#00dbe9", "on-secondary-fixed": "#271900", "secondary": "#ffdb9d",
+                      "tertiary-fixed": "#ffdad5", "surface-container-high": "#252a33", "on-tertiary": "#690003", "secondary-fixed-dim": "#ffba20",
+                      "on-surface": "#dee2ee", "on-tertiary-container": "#c1000a", "surface": "#0f141b"
+              },
+              "spacing": { "unit": "4px", "gutter": "16px" },
+              "fontFamily": { "status-sm": ["JetBrains Mono"], "data-mono": ["JetBrains Mono"], "label-caps": ["JetBrains Mono"] }
+            }
+          }
+        }
+    </script>
+<style>
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        .scan-line { background: linear-gradient(to bottom, transparent 50%, rgba(255, 255, 255, 0.05) 50%); background-size: 100% 4px; pointer-events: none; }
+        .flicker { animation: textFlicker 3s infinite alternate; }
+        @keyframes textFlicker { 0%, 20%, 62%, 100% { opacity: 1; } 21%, 63% { opacity: 0.4; } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f141b; }
+        ::-webkit-scrollbar-thumb { background: #3b494b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+        
+        .typewriter-text { overflow: hidden; white-space: pre-wrap; border-right: 2px solid #00f0ff; animation: typing 2s steps(40, end), blink-caret .75s step-end infinite; }
+        @keyframes typing { from { max-height: 0; opacity: 0; } to { max-height: 1000px; opacity: 1; } }
+        @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: #00f0ff; } }
+        
+        /* Print Styles */
+        @media print {
+            nav, header, .no-print { display: none !important; }
+            main { position: relative !important; top: 0 !important; left: 0 !important; width: 100% !important; height: auto !important; margin: 0 !important; overflow: visible !important; background: white !important; color: black !important; }
+            .dark { background: white; color: black; }
+            * { filter: none !important; box-shadow: none !important; text-shadow: none !important; border-color: #ccc !important; }
+            .typewriter-text { animation: none !important; border-right: none !important; max-height: none !important; opacity: 1 !important; color: black !important; }
+            strong { color: black !important; }
+        }
+</style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container selection:text-[#00363a] flex flex-col">
+
+<div class="fixed inset-0 scan-line z-50 pointer-events-none mix-blend-screen opacity-50 no-print"></div>
+
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-surface/90 backdrop-blur-md border-b border-outline-variant text-primary no-print">
+    <div class="flex items-center gap-4">
+        <div class="text-[24px] font-bold tracking-tighter text-primary-container">Kraken</div>
+    </div>
+    <div class="flex items-center gap-4">
+        <span class="text-[11px] font-mono text-secondary-container tracking-widest hidden lg:block border border-secondary-container/30 px-2 py-0.5 bg-secondary-container/5">CLEARANCE: OMEGA</span>
+        <a href="/"><button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors">SECURE LOGOUT</button></a>
+    </div>
+</header>
+
+<nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col z-40 bg-surface-container-low border-r border-outline-variant text-primary-fixed-dim no-print">
+    <div class="p-4 border-b border-outline-variant flex items-center gap-3">
+        <div class="w-8 h-8 border border-primary-container/30 bg-surface-dim flex items-center justify-center relative">
+            <div class="absolute inset-0 bg-primary-container/10 animate-pulse"></div>
+            <span class="material-symbols-outlined text-primary-container text-[16px]">radar</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-[11px] font-mono text-primary-fixed leading-tight">Kraken v4.0</span>
+            <span class="text-[10px] font-mono text-outline flicker leading-tight">DOCUMENTATION</span>
+        </div>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto py-2 flex flex-col text-[11px] font-mono">
+        <a href="/command" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">dashboard</span>Command</a>
+        <a href="/network" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">hub</span>Network</a>
+        <a href="/predictions" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">psychology</span>Predictions</a>
+        <a href="/syndicates" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">groups</span>Syndicates</a>
+        <a href="/intake" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">upload_file</span>Intake</a>
+        <a href="/profile" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container border-l-4 border-transparent text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">person_search</span>Profiles</a>
+        
+        <a href="/reports" class="flex items-center gap-3 px-4 py-3 bg-surface-container-highest border-l-4 border-primary text-primary group relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <span class="material-symbols-outlined text-[18px]">description</span>Reports
+        </a>
+    </div>
+    
+    <div class="p-4 border-t border-outline-variant/50 flex flex-col gap-3">
+        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]">NEW CASE</button>
+    </div>
+</nav>
+
+<main class="absolute top-16 left-64 w-[calc(100%-16rem)] h-[calc(100vh-4rem)] bg-background p-6" style="overflow-y: auto !important; overflow-x: hidden;">
+    <div class="max-w-5xl mx-auto flex flex-col gap-6 pb-20">
+        
+        <div class="bg-surface border border-outline-variant flex justify-between items-center p-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <span class="material-symbols-outlined text-primary-container text-[48px] opacity-80">assignment</span>
+                <div>
+                    <div class="text-[12px] font-mono text-on-surface-variant tracking-widest mb-1">AUTO-GENERATED INTELLIGENCE BRIEF</div>
+                    <h1 class="text-[28px] font-mono font-bold text-white uppercase tracking-tight leading-tight">OPERATION: Kraken PURGE</h1>
+                    <div class="text-[13px] font-mono text-primary mt-1">Generated by: Kraken NLP & Graph Engine</div>
+                </div>
+            </div>
+            <div class="text-right text-[11px] font-mono text-on-surface-variant hidden md:block">
+                <div>DATE: <span class="text-white" id="current-date"></span></div>
+                <div>CLASSIFICATION: <span class="text-error font-bold">TOP SECRET (OMEGA)</span></div>
+                <div>PAGES: 01 (EXECUTIVE SUMMARY)</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+            
+            <div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+                
+                <div class="bg-surface border border-outline-variant p-6 h-full relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-transparent"></div>
+                    <h2 class="text-[14px] font-mono font-bold text-primary-container uppercase mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">notes</span> Executive Summary
+                    </h2>
+                    
+                    <div class="text-[12px] font-mono text-on-surface-variant leading-relaxed space-y-4 typewriter-text" id="report-text">
+<strong class="text-white">BACKGROUND:</strong>
+Cross-referencing FIR databases with recent Call Detail Records (CDRs) and financial logs has unveiled a highly structured cyber-fraud syndicate operating across multiple jurisdictions.
+
+<strong class="text-white">KEY ENTITIES IDENTIFIED:</strong>
+1. <strong class="text-error">Rachit Walla:</strong> Identified as a primary mastermind orchestrating the network. Risk score calculated at 98 (CRITICAL). Direct links to 7+ fraudulent bank nodes.
+2. <strong class="text-error">Advaith Yadav:</strong> Co-conspirator managing offshore shell accounts. Intercepted communications align with recent fund transfers.
+3. <strong class="text-secondary-container">Lakshit Luthra:</strong> Enforcer operating burner phone networks, primarily intercepted near high-density urban cell towers.
+
+<strong class="text-white">AI PREDICTIVE ANALYSIS:</strong>
+The Kraken engine successfully correlated seemingly isolated FIRs and generated 15 hidden links connecting the perpetrators. Funds are being actively moved into offshore hawala accounts to bypass traditional tracking systems.
+
+<strong class="text-white">CONCLUSION:</strong>
+Immediate action is recommended to freeze the identified banking nodes and deploy field agents to the high-density tower locations flagged in the CDR intercepts linked to Rachit Walla and Advaith Yadav.
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="col-span-12 lg:col-span-4 flex flex-col gap-6 no-print">
+                
+                <div class="bg-surface border border-outline-variant p-4">
+                    <h2 class="text-[12px] font-mono font-bold text-on-surface-variant uppercase mb-4">Database Metrics</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
+                            <span class="text-[11px] font-mono text-on-surface">Total Nodes Analyzed</span>
+                            <span class="text-[14px] font-mono font-bold text-primary-container">4,192</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
+                            <span class="text-[11px] font-mono text-on-surface">Syndicates Mapped</span>
+                            <span class="text-[14px] font-mono font-bold text-primary-container">04</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[11px] font-mono text-on-surface">AI Hidden Links Found</span>
+                            <span class="text-[14px] font-mono font-bold text-secondary-container flicker">15</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-surface-container-low border border-outline-variant p-4 flex flex-col gap-3">
+                    <h2 class="text-[12px] font-mono font-bold text-on-surface-variant uppercase mb-3">Report Actions</h2>
+                    
+                    <button id="btn-export" class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-3 hover:bg-transparent hover:text-primary-container border border-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)] flex justify-center items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> EXPORT DOSSIER (PDF)
+                    </button>
+                    
+                    <button class="w-full bg-surface text-secondary-fixed text-[11px] font-mono py-3 hover:bg-surface-container-highest border border-secondary-fixed/50 transition-colors flex justify-center items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">share</span> SECURE SHARE (INTERPOL)
+                    </button>
+                    
+                    <button class="w-full bg-surface text-error text-[11px] font-mono py-3 hover:bg-error/10 border border-error/50 transition-colors flex justify-center items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">archive</span> ARCHIVE CASE
+                    </button>
+                </div>
+
+            </div>
+            
+        </div>
+    </div>
+</main>
+
+<script>
+    const dateObj = new Date();
+    document.getElementById('current-date').innerText = dateObj.toISOString().split('T')[0];
+
+    document.getElementById('btn-export').addEventListener('click', function() {
+        const btn = this;
+        btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> ENCRYPTING DATA...`;
+        btn.classList.replace('bg-primary-container', 'bg-surface-variant');
+        btn.classList.replace('text-[#00363a]', 'text-primary-container');
+        
+        setTimeout(() => {
+            btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check_circle</span> SAVED TO SECURE DRIVE`;
+            btn.classList.replace('bg-surface-variant', 'bg-secondary-fixed');
+            btn.classList.replace('text-primary-container', 'text-[#412d00]');
+            btn.classList.replace('border-primary-container', 'border-secondary-fixed');
+            btn.style.boxShadow = "0 0 10px rgba(255,222,168,0.3)";
+            
+            setTimeout(() => { window.print(); }, 1000);
+            
+            setTimeout(() => {
+                btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> EXPORT DOSSIER (PDF)`;
+                btn.classList.replace('bg-secondary-fixed', 'bg-primary-container');
+                btn.classList.replace('text-[#412d00]', 'text-[#00363a]');
+                btn.classList.replace('border-secondary-fixed', 'border-primary-container');
+                btn.style.boxShadow = "0 0 10px rgba(0,240,255,0.2)";
+            }, 5000);
+        }, 1500);
+    });
+</script>
+</body></html>
