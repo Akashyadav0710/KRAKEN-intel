@@ -102,7 +102,6 @@ pycparser==2.23
 pydantic==2.13.4
 pydantic_core==2.46.4
 pyee==13.0.1
-pygame==2.6.1
 PyGetWindow==0.0.9
 Pygments==2.20.0
 pyjsparser==2.7.1
