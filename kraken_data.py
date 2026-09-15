@@ -415,6 +415,7 @@ _intake_batches = []
 # ye overlay hai, kabhi bhi restore ho sakta hai.
 _suppressed_nodes = set()      # lowercase ids (person / phone / account / location)
 _suppressed_pairs = set()      # frozenset({a, b}) -- ek specific link
+_state_mtime = None            # state file ka last-loaded mtime
 
 
 
@@ -434,8 +435,22 @@ def _stamp(path):
         return None
 
 
+def _sync_state_from_disk():
+    """
+    State file bahar se badal gayi ho (dusra process, ya tests) to usay dobara
+    padho. Pehle ye sirf import par load hoti thi, isliye server ki memory aur
+    disk alag ho jate the.
+    """
+    if _state_file_mtime() != _state_mtime:
+        _load_state()          # khud _lock leta hai
+        return True
+    return False
+
+
 def graph(force=False):
     """Cached graph. JSON file badal jaye to apne aap reload hota hai."""
+    if _sync_state_from_disk():
+        force = True
     path = _dataset_path()
     with _lock:
         stamp = _stamp(path) if path else ("missing", len(_intake_batches),
@@ -1192,14 +1207,25 @@ def _write_state(payload):
             pass
 
 
+def _state_file_mtime():
+    try:
+        return os.stat(STATE_PATH).st_mtime
+    except OSError:
+        return None
+
+
 def _save_state():
+    global _state_mtime
     with _lock:
         payload = _state_payload()
     _write_state(payload)
+    _state_mtime = _state_file_mtime()   # apna hi write dobara load na ho
 
 
 def _load_state():
     """Startup par purane edits wapas load karo. Corrupt file ko chup-chaap ignore."""
+    global _state_mtime
+    _state_mtime = _state_file_mtime()
     if not os.path.exists(STATE_PATH):
         return
     try:
