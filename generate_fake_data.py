@@ -1,13 +1,36 @@
-import random
+"""
+Synthetic case data generator for Kraken.
+
+Writes firs.txt, cdr.csv and transactions.csv into sample_data/.
+Needs faker:  ./venv/bin/pip install -r requirements-pipeline.txt
+
+IMPORTANT: this only regenerates the RAW sources. sample_data/extracted_entities.json
+(which the dashboard actually reads) is produced by ner_extractor.py, so run that
+afterwards or the app will keep serving entities that no longer match these files.
+
+    ./venv/bin/python generate_fake_data.py --force
+    ./venv/bin/python ner_extractor.py
+"""
+
+import argparse
 import csv
 import os
-from datetime import datetime, timedelta
+import random
+import sys
+
 from faker import Faker
 
-fake = Faker("en_IN")  
-random.seed(42)
+SEED = 42
+
+# Dono RNG seed karna zaroori hai. Pehle sirf random.seed(42) tha, isliye phone
+# aur account number to fixed rehte the lekin Faker ke naam har run par badal
+# jate the -- yaani wahi number kisi aur insaan ka ban jata tha.
+fake = Faker("en_IN")
+Faker.seed(SEED)
+random.seed(SEED)
 
 OUT_DIR = "sample_data"
+OUTPUT_FILES = ("firs.txt", "cdr.csv", "transactions.csv")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 NUM_PERSONS = 40
@@ -85,8 +108,44 @@ def generate_transactions(people):
         writer.writeheader()
         writer.writerows(rows)
 
-if __name__ == "__main__":
+def main():
+    parser = argparse.ArgumentParser(description="Generate synthetic case data for Kraken.")
+    parser.add_argument("--force", action="store_true",
+                        help="overwrite existing files in sample_data/")
+    parser.add_argument("--seed", type=int, default=SEED,
+                        help="random seed (default: %d)" % SEED)
+    args = parser.parse_args()
+
+    Faker.seed(args.seed)
+    random.seed(args.seed)
+
+    # Committed dataset ko chup-chaap overwrite karna sabse bada khatra tha
+    existing = [f for f in OUTPUT_FILES if os.path.exists(os.path.join(OUT_DIR, f))]
+    if existing and not args.force:
+        sys.exit(
+            "Refusing to overwrite existing data in %s/:\n"
+            "    %s\n"
+            "Re-run with --force if you really want to replace it.\n"
+            "Note: the dashboard reads sample_data/extracted_entities.json, which is\n"
+            "produced by ner_extractor.py -- regenerate it afterwards or the app will\n"
+            "serve entities that no longer match these files."
+            % (OUT_DIR, "\n    ".join(existing))
+        )
+
     people_pool = make_person_pool(NUM_PERSONS)
     generate_firs(people_pool)
     generate_cdr(people_pool)
     generate_transactions(people_pool)
+
+    print("Generated in %s/ (seed %d):" % (OUT_DIR, args.seed))
+    print("  firs.txt          %d FIR reports" % NUM_FIRS)
+    print("  cdr.csv           %d call records" % NUM_CDR_RECORDS)
+    print("  transactions.csv  %d transfers" % NUM_TXN_RECORDS)
+    print("  person pool       %d people" % NUM_PERSONS)
+    print()
+    print("Next: ./venv/bin/python ner_extractor.py")
+    print("      (rebuilds sample_data/extracted_entities.json, which the app reads)")
+
+
+if __name__ == "__main__":
+    main()
