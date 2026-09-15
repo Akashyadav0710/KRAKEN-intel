@@ -1,0 +1,7 @@
+{
+  // Pylance defaults to the system interpreter, where spacy / networkx / neo4j
+  // are not installed -- hence the "could not be resolved" warnings. The venv
+  // created by the README (python -m venv venv) has all of them.
+  "python.defaultInterpreterPath": "./venv/bin/python",
+  "python.analysis.extraPaths": ["./venv/lib/python3.9/site-packages"]
+}

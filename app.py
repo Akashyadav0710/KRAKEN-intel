@@ -1,6 +1,5 @@
-from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+from flask import Flask, render_template, jsonify, request, session, url_for
 import os
-import json
 import secrets
 import signal
 import threading
