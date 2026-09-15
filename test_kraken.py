@@ -317,6 +317,20 @@ class ManualEditTests(unittest.TestCase):
             self.assertNotEqual(a, name)
             self.assertNotEqual(b, name)
 
+    def test_empty_intake_is_rejected(self):
+        # Khaali payload par kuch merge nahi hona chahiye
+        self.assertIsNone(kd.add_intake([], [], []))
+        self.assertIsNone(kd.add_intake(["  "], [""], []))
+        self.assertEqual(kd.stats()["persons"], self.baseline["persons"])
+
+    def test_duplicate_intake_adds_nothing_new(self):
+        existing = kd.dossiers()[0]["name"]
+        before = kd.stats()
+        kd.add_intake([existing], [], [])
+        after = kd.stats()
+        self.assertEqual(after["persons"], before["persons"],
+                         "re-adding a known person must not create a duplicate")
+
     def test_remove_unknown_entity_returns_none(self):
         self.assertIsNone(kd.remove_entity("Nobody At All"))
 

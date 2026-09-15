@@ -337,18 +337,40 @@ def update_graph():
         banks = data.get('banks') or data.get('accounts') or []
 
         before = kraken_data.stats()
-        kraken_data.add_intake(names, phones, banks)
+        merged = kraken_data.add_intake(names, phones, banks)
+
+        # Khaali payload par "merged" bolna galat tha -- ab saaf mana karo.
+        if merged is None:
+            return jsonify({
+                "status": "error",
+                "message": "No entities supplied. Provide at least one name, "
+                           "phone number or account."
+            }), 400
+
         after = kraken_data.stats()
+        added = {
+            "persons": after["persons"] - before["persons"],
+            "phones": after["phones"] - before["phones"],
+            "accounts": after["accounts"] - before["accounts"],
+            "links": after["confirmed_links"] - before["confirmed_links"],
+        }
+
+        if sum(added.values()) == 0:
+            # Kuch bheja to tha, lekin sab pehle se graph mein hai
+            message = "Nothing new: every entity supplied is already in the graph."
+        else:
+            parts = []
+            for key, label in (("persons", "person"), ("phones", "SIM"),
+                               ("accounts", "account"), ("links", "link")):
+                if added[key]:
+                    parts.append("%d %s%s" % (added[key], label,
+                                              "" if added[key] == 1 else "s"))
+            message = "Merged into the live graph: %s." % ", ".join(parts)
 
         return jsonify({
             "status": "success",
-            "message": "Intelligence merged into the live graph.",
-            "added": {
-                "persons": after["persons"] - before["persons"],
-                "phones": after["phones"] - before["phones"],
-                "accounts": after["accounts"] - before["accounts"],
-                "links": after["confirmed_links"] - before["confirmed_links"],
-            },
+            "message": message,
+            "added": added,
             "stats": after,
         })
     except Exception as exc:

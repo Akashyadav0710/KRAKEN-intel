@@ -307,12 +307,14 @@
         setTimeout(async () => {
             if (totalNodes > 0) {
                 try {
-                    await fetch('/api/update-graph', {
+                    const syncRes = await fetch('/api/update-graph', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ names, phones, banks })
                     });
-                    addLog("[API] Kraken DB Cross-referenced Successfully.", "text-secondary-container");
+                    const syncData = await syncRes.json().catch(() => ({}));
+                    addLog(`[API] ${syncData.message || 'Graph sync complete.'}`,
+                           syncRes.ok ? "text-secondary-container" : "text-error");
                     if (typeof refreshLedger === 'function') refreshLedger();
                 } catch(e) {
                     addLog("[ERROR] Backend connection failed.", "text-error");
@@ -497,7 +499,8 @@
         try {
             const res = await api('/api/update-graph', { names, phones, banks });
             const a = res.added || {};
-            ledgerLog(`[ADD] +${a.persons || 0} person, +${a.phones || 0} SIM, +${a.accounts || 0} account, +${a.links || 0} link.`, 'text-primary-container');
+            const total = (a.persons || 0) + (a.phones || 0) + (a.accounts || 0) + (a.links || 0);
+            ledgerLog(`[ADD] ${res.message}`, total > 0 ? 'text-primary-container' : 'text-secondary-container');
             nameEl.value = phoneEl.value = accEl.value = '';
             await refreshLedger();
         } catch (e) {
