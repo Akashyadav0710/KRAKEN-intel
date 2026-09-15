@@ -10,24 +10,71 @@ ACCOUNT_PATTERN = re.compile(r"XXXX\d{4}")
 FIR_NUMBER_PATTERN = re.compile(r"FIR No\.\s*\d+/\d{4}")
 RELATIONSHIP_KEYWORDS = ["co-accused", "along with", "in association with", "accomplice", "known associate of"]
 
+# "residing at <address>, <relationship phrase>" -- is clause ke andar jo kuch
+# hai wo pata hai, insaan nahi. spaCy address ke tukdon ko PERSON tag kar deta
+# tha ("Berhampore", "Kara"), aur phir neeche wala contact-regex un tukdon par
+# asli accused ka phone/account chipka deta tha.
+ADDRESS_SPAN_RE = re.compile(
+    r"residing at\s+(.*?),\s*(?:%s)\b" % "|".join(re.escape(k) for k in RELATIONSHIP_KEYWORDS),
+    re.I | re.S,
+)
+
+
+# FIR ka asli rishta accused <-> co-accused ka hai. Pehle yahan persons[0] aur
+# persons[1] use hote the, lekin spaCy "FIR No." ko bhi PERSON tag karta hai --
+# to har edge "FIR No." se complainant tak jata tha, aur downstream filter use
+# document artifact maan kar hata deta tha. Natija: 59 links mein se 0 bachte.
+ACCUSED_RE = re.compile(r"\baccused\s+(.+?)\s*,\s*residing at\b", re.I)
+CO_ACCUSED_RE = re.compile(
+    r"\b(%s)\s+(.+?)\s*\(\s*contact" % "|".join(re.escape(k) for k in RELATIONSHIP_KEYWORDS),
+    re.I,
+)
+
+
+def _relationship(text_block, fir_no):
+    """accused aur co-accused ko seedha FIR ke structure se nikalta hai."""
+    accused = ACCUSED_RE.search(text_block)
+    co = CO_ACCUSED_RE.search(text_block)
+    if not (accused and co):
+        return None
+    person_a = accused.group(1).strip()
+    person_b = co.group(2).strip()
+    if not person_a or not person_b or person_a == person_b:
+        return None
+    return {
+        "person_a": person_a, "person_b": person_b,
+        "type": co.group(1).lower(),
+        "source": fir_no[0] if fir_no else "unknown_fir",
+    }
+
+
+def _address_spans(text_block):
+    return [m.span(1) for m in ADDRESS_SPAN_RE.finditer(text_block)]
+
+
+def _inside(span, spans):
+    start, end = span
+    return any(s <= start and end <= e for s, e in spans)
+
+
 def extract_from_fir_text(text_block):
     doc = nlp(text_block)
-    persons = [ent.text for ent in doc.ents if ent.label_ == "PERSON"]
-    locations = [ent.text for ent in doc.ents if ent.label_ in ("GPE", "LOC", "FAC")]
+    addr_spans = _address_spans(text_block)
+
+    persons, locations = [], []
+    for ent in doc.ents:
+        span = (ent.start_char, ent.end_char)
+        if ent.label_ == "PERSON":
+            # Pata ke andar ka naam jagah hai, aadmi nahi.
+            (locations if _inside(span, addr_spans) else persons).append(ent.text)
+        elif ent.label_ in ("GPE", "LOC", "FAC"):
+            locations.append(ent.text)
     phones = PHONE_PATTERN.findall(text_block)
     accounts = ACCOUNT_PATTERN.findall(text_block)
     fir_no = FIR_NUMBER_PATTERN.findall(text_block)
 
-    relationship = None
-    ownership_edges = [] 
-
-    for keyword in RELATIONSHIP_KEYWORDS:
-        if keyword in text_block and len(persons) >= 2:
-            relationship = {
-                "person_a": persons[0], "person_b": persons[1],
-                "type": keyword, "source": fir_no[0] if fir_no else "unknown_fir",
-            }
-            break
+    relationship = _relationship(text_block, fir_no)
+    ownership_edges = []
 
     for person in persons:
         phone_match = re.search(re.escape(person) + r".*?contact\s*(\+91\d{10})", text_block)

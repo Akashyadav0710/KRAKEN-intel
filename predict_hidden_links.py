@@ -1,12 +1,43 @@
 import json
-import networkx as nx
+import math
+
+
+class Graph:
+    """Minimal undirected graph implementation used for link prediction."""
+
+    def __init__(self):
+        self._neighbors = {}
+
+    def add_nodes_from(self, nodes):
+        for node in nodes:
+            self._neighbors.setdefault(node, set())
+
+    def add_edge(self, first, second):
+        self._neighbors.setdefault(first, set()).add(second)
+        self._neighbors.setdefault(second, set()).add(first)
+
+
+def adamic_adar_index(graph):
+    """Yield Adamic-Adar scores for pairs of nodes without direct edges."""
+    nodes = list(graph._neighbors)
+    for index, first in enumerate(nodes):
+        for second in nodes[index + 1:]:
+            if second in graph._neighbors[first]:
+                continue
+            common = graph._neighbors[first] & graph._neighbors[second]
+            score = sum(
+                1 / math.log(len(graph._neighbors[node]))
+                for node in common
+                if len(graph._neighbors[node]) > 1
+            )
+            yield first, second, score
 
 def build_ai_predictor():
     print("Loading graph data for AI Prediction...")
     with open("sample_data/extracted_entities.json", "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    G = nx.Graph()
+    G = Graph()
     persons = data["nodes"]["persons"]
     G.add_nodes_from(persons)
 
@@ -39,7 +70,7 @@ def build_ai_predictor():
 
     print("Running Adamic-Adar Graph Topology Link Prediction...")
     # AI Logic: Predicts links based on shared structural network patterns
-    preds = nx.adamic_adar_index(G)
+    preds = adamic_adar_index(G)
     
     hidden_links = []
     for u, v, p in preds:

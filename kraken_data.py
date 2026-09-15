@@ -51,7 +51,10 @@ ACCOUNT_RE = re.compile(r"^(?:xxxx|ac|acc|a/c)[-\s]?\d+$", re.I)
 PINCODE_PLACE_RE = re.compile(r"^([A-Za-z][A-Za-z.\s]{2,40}?)[-\s](\d{6})$")
 LOCATION_RE = re.compile(
     r"\b(road|rd|marg|zila|district|nagar|colony|chowk|bazaar|market|sector|"
-    r"gali|galli|lane|street|tola|thana|station|village|city|ganj)\b", re.I)
+    r"gali|galli|lane|street|tola|thana|station|village|city|ganj|"
+    # "Kakar Path", "Borra Circle" -- Faker ke street names surname se bante
+    # hain, isliye NER inhe PERSON tag kar deta tha.
+    r"path|circle|vihar|puram|pura|basti|mohalla|layout|cross|chauraha)\b", re.I)
 
 
 def _clean(value):
@@ -113,6 +116,7 @@ class KrakenGraph:
     def __init__(self):
         self.persons = {}          # canonical name -> dossier dict
         self._alias = {}           # lowercase -> canonical name
+        self._first_token = {}     # "fiyaz" -> {"Fiyaz Sangha"}
         self.locations = set()
         self.phone_owner = {}      # phone  -> person
         self.account_owner = {}    # account -> person
@@ -141,13 +145,37 @@ class KrakenGraph:
         if key in self._alias:
             return self._alias[key]
 
+        # NER kabhi-kabhi naam aadha kaat deta hai ("Fiyaz Sangha" -> "Fiyaz").
+        # Agar us pehle word se sirf ek hi poora naam banta hai to wahi insaan
+        # hai -- warna ek aadmi ke do node ban jate the.
+        full = self._resolve_fragment(name)
+        if full:
+            self._alias[key] = full
+            return full
+
         self._alias[key] = name
+        self._index_first_token(name)
         self.persons[name] = {
             "name": name, "phones": set(), "accounts": set(), "firs": set(),
             "towers": set(), "calls": 0, "sent": 0.0, "received": 0.0,
             "intake": False, "call_log": [], "txn_log": [],
         }
         return name
+
+    def _index_first_token(self, name):
+        parts = name.split()
+        if len(parts) > 1:
+            self._first_token.setdefault(parts[0].lower(), set()).add(name)
+
+    def _resolve_fragment(self, name):
+        """Akela word -- agar usse sirf ek poora naam banta hai to wahi lautao."""
+        parts = name.split()
+        if len(parts) != 1:
+            return None
+        matches = self._first_token.get(parts[0].lower())
+        if matches and len(matches) == 1:
+            return next(iter(matches))
+        return None
 
     # Akela generic word koi jagah nahi hai -- NER ka kachra.
     GENERIC_PLACES = {"marg", "road", "rd", "street", "lane", "zila", "nagar",
@@ -205,8 +233,21 @@ def _build_graph(raw, intake_batches):
     nodes = raw.get("nodes", {}) or {}
     edges = raw.get("edges", {}) or {}
 
+    # 0. Pehle transactions.csv ke poore naam. Ye structured CSV se aate hain,
+    #    NER ke guess nahi -- isliye inhe canonical maana jata hai. Inke bina
+    #    account ka owner NER ka aadha naam ("Fiyaz") ban jata tha aur asli
+    #    insaan ("Fiyaz Sangha") graph se hi gayab ho jata tha.
+    for txn in edges.get("money_transfers", []) or []:
+        g.add_person(txn.get("from_name"))
+        g.add_person(txn.get("to_name"))
+
     # 1. Declared nodes (NER noise yahin filter hota hai)
+    #    Jo string NER ne person AUR location dono bataya hai, wo jagah hai.
+    ner_locations = {_clean(x).lower() for x in (nodes.get("locations", []) or [])}
     for raw_name in nodes.get("persons", []) or []:
+        if _clean(raw_name).lower() in ner_locations:
+            g.add_location(raw_name)
+            continue
         g.add_person(raw_name)
     for raw_name in nodes.get("locations", []) or []:
         g.add_location(raw_name)
