@@ -66,6 +66,13 @@ class NoiseFilterTests(unittest.TestCase):
         self.assertEqual(kd.normalise_person("Complainant Timothy Dutt"), "Timothy Dutt")
         self.assertEqual(kd.normalise_person("accused Kritika Buch"), "Kritika Buch")
 
+    def test_document_artifacts_are_not_people(self):
+        # spaCy naye data par "FIR No" ko PERSON tag kar deta hai aur wo
+        # influence ranking mein #1 aa jata tha.
+        for junk in ("FIR No", "FIR No. 1004/2025", "Police Station", "IPC 420",
+                     "Rs 50000", "Section 66D", "Case No", "Dated 12/03/2025"):
+            self.assertIsNone(kd.normalise_person(junk), junk)
+
     def test_real_name_survives(self):
         self.assertEqual(kd.normalise_person("  Kritika  Buch "), "Kritika Buch")
 

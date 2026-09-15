@@ -96,8 +96,11 @@ def normalise_person(value):
     # noise yahin ruk jati hai.
     if re.search(r"\d", name):
         return None
-    # Bachi-khuchi entity-label noise ("account ...", "phone ...")
-    if re.match(r"^(account|acct|phone|mobile|number|amount|rs)\b", name, re.I):
+    # Document artifacts jo NER ko insaan lagte hain: "FIR No", "Police Station",
+    # "IPC", "Rs", "Account ..." -- inme se koi bhi aadmi nahi hai.
+    if re.match(r"^(account|acct|phone|mobile|number|amount|rs|rupees|fir|f\.i\.r|"
+                r"ipc|crpc|section|sec|police|thana|station|chowki|case|complaint|"
+                r"investigation|dated|date|no|sr|serial)\b", name, re.I):
         return None
     return name
 

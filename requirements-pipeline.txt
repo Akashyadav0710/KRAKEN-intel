@@ -14,7 +14,9 @@
 #   graph_loader.py         neo4j  (also needs a running Neo4j server;
 #                                  set NEO4J_PASSWORD in the environment)
 
-spacy
+# spaCy is pinned: newer releases need thinc>=8.3.12, which requires
+# Python >=3.10. This venv is Python 3.9, so 3.7.5 is the working line.
+spacy==3.7.5
 networkx
 faker
 neo4j
