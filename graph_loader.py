@@ -1,9 +1,16 @@
 import json
+import os
+import sys
+
 from neo4j import GraphDatabase
 
-NEO4J_URI = "bolt://localhost:7687"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "password123"  # Dhyaan rakhna, Neo4j setup karte time yahi password rakhna
+# Credentials environment se aate hain -- repo mein koi password commit nahi hota.
+#   export NEO4J_URI="bolt://localhost:7687"
+#   export NEO4J_USER="neo4j"
+#   export NEO4J_PASSWORD="<your password>"
+NEO4J_URI = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USER = os.environ.get("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.environ.get("NEO4J_PASSWORD")
 
 class GraphLoader:
     def __init__(self, uri, user, password):
@@ -105,6 +112,10 @@ class GraphLoader:
                     session.execute_write(self.create_ownership_edge, link)
 
 if __name__ == "__main__":
+    if not NEO4J_PASSWORD:
+        sys.exit("NEO4J_PASSWORD is not set. Export it before running this loader:\n"
+                 '    export NEO4J_PASSWORD="<your password>"')
+
     with open("sample_data/extracted_entities.json", "r", encoding="utf-8") as f:
         payload = json.load(f)
 

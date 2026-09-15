@@ -63,12 +63,12 @@
         <div class="flex items-center gap-1">
             <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
             <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">settings</span></button>
-            <button class="p-2 text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">terminal</span></button>
+            <button class="p-2 text-primary-container transition-colors" onclick="window.location.href='/intake'" title="NLP intake terminal"><span class="material-symbols-outlined text-[20px]">terminal</span></button>
         </div>
         <div class="w-px h-6 bg-outline-variant mx-2"></div>
         <div class="flex items-center gap-3">
             <img alt="User Profile Avatar" class="w-8 h-8 object-cover border border-outline-variant p-0.5 grayscale hover:grayscale-0 transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2FNx_jB8pBhqUGB-P5Tx_BsSQ9HXyCxfZmgzLZfbFwFf23DJbo_Zp1gg5ElHR07kB0mf1wYiqKkB4g1uhmMNbXpbgX7-Mp1CdYG99iJS1RMBTip6ivAoY_yqc8wzV4wGDF8UVTzEQJBB58k4PevR7I0Lso0kBKeHCsMF9ptuzlzfLeinw8OwhaJydy-4WpebrrIvylvYO4UC_Ny6ruNY3SQJJUp9SRKRWQeiznKWak8zp3BhkrKdO">
-            <a href="/"><button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors">SECURE LOGOUT</button></a>
+            <button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors" type="button" onclick="return krakenLogout(event);" title="Terminate session and return to secure access">SECURE LOGOUT</button>
         </div>
     </div>
 </header>
@@ -102,7 +102,7 @@
     </div>
     
     <div class="p-4 border-t border-outline-variant/50 flex flex-col gap-3">
-        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]">NEW CASE</button>
+        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]" onclick="window.location.href='/intake'" title="Open the intake console to file new intelligence">NEW CASE</button>
         <div class="flex justify-between items-center text-[11px] font-mono mt-2">
             <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">code</span> Terminal</a>
             <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">help</span> Support</a>
@@ -156,21 +156,78 @@
             </div>
         </div>
 
-        <!-- Live NLP Terminal -->
-        <div class="col-span-12 lg:col-span-5 bg-[#0a0d12] border border-outline-variant flex flex-col h-full relative overflow-hidden">
-            <div class="bg-[#171c24] px-4 py-3 border-b border-outline-variant flex items-center justify-between shrink-0">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[18px] text-secondary-fixed">terminal</span>
-                    <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Kraken NLP PROCESSOR</span>
+        <!-- Live NLP Terminal + Graph Ledger -->
+        <div class="col-span-12 lg:col-span-5 flex flex-col h-full gap-unit overflow-hidden">
+
+            <div class="bg-[#0a0d12] border border-outline-variant flex flex-col relative overflow-hidden" style="flex: 1 1 45%; min-height: 180px;">
+                <div class="bg-[#171c24] px-4 py-3 border-b border-outline-variant flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px] text-secondary-fixed">terminal</span>
+                        <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Kraken NLP PROCESSOR</span>
+                    </div>
+                    <div class="w-2 h-2 rounded-full bg-secondary-fixed animate-pulse hidden" id="processing-dot"></div>
                 </div>
-                <div class="w-2 h-2 rounded-full bg-secondary-fixed animate-pulse hidden" id="processing-dot"></div>
+
+                <div id="terminal-output" class="p-4 flex-1 overflow-y-auto font-mono text-[12px] text-on-surface-variant leading-relaxed space-y-2">
+                    <div>[SYS] Kraken NLP Engine ready.</div>
+                    <div>[SYS] Awaiting unstructured input stream...</div>
+                    <div class="flex items-center gap-2 mt-2 text-primary-container" id="terminal-cursor">
+                        <span>_</span><span class="animate-pulse">█</span>
+                    </div>
+                </div>
             </div>
-            
-            <div id="terminal-output" class="p-4 flex-1 overflow-y-auto font-mono text-[12px] text-on-surface-variant leading-relaxed space-y-2">
-                <div>[SYS] Kraken NLP Engine ready.</div>
-                <div>[SYS] Awaiting unstructured input stream...</div>
-                <div class="flex items-center gap-2 mt-2 text-primary-container" id="terminal-cursor">
-                    <span>_</span><span class="animate-pulse">█</span>
+
+            <!-- GRAPH LEDGER: add / remove / restore, sab live -->
+            <div class="bg-surface border border-outline-variant flex flex-col overflow-hidden" style="flex: 1 1 55%; min-height: 220px;">
+                <div class="bg-surface-container px-4 py-3 border-b border-outline-variant flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px] text-primary-container">edit_note</span>
+                        <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Live Graph Ledger</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono text-outline-variant" id="ledger-counts">--</span>
+                        <span class="text-[9px] font-mono text-outline-variant border border-outline-variant/50 px-1" id="ledger-saved" title="Manual edits are saved to disk and persist across restarts">SAVED</span>
+                    </div>
+                </div>
+
+                <div class="p-3 border-b border-outline-variant/50 shrink-0">
+                    <div class="text-[10px] font-mono text-outline-variant tracking-widest mb-2">QUICK ADD &middot; SINGLE ENTITY</div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input id="add-name" type="text" placeholder="Name" spellcheck="false"
+                               class="bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
+                        <input id="add-phone" type="text" placeholder="+91XXXXXXXXXX" spellcheck="false"
+                               class="bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
+                        <input id="add-account" type="text" placeholder="XXXX1234" spellcheck="false"
+                               class="bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <button id="btn-add" class="bg-primary-container text-[#00363a] text-[10px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">add_circle</span> ADD TO GRAPH
+                        </button>
+                        <button id="btn-undo" class="bg-transparent text-secondary-container text-[10px] font-mono font-bold py-2 border border-secondary-container/60 hover:bg-secondary-container/10 transition-colors flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">undo</span> UNDO LAST UPLOAD
+                        </button>
+                    </div>
+                    <div class="mt-2">
+                        <button id="btn-reset" class="w-full bg-transparent text-outline text-[10px] font-mono py-1.5 border border-outline-variant hover:border-error hover:text-error transition-colors flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">restart_alt</span> RESET TO SOURCE DATA
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-3 border-b border-outline-variant/50 shrink-0">
+                    <div class="text-[10px] font-mono text-outline-variant tracking-widest mb-2">REMOVE ENTITY &middot; ANY NODE</div>
+                    <div class="flex gap-2">
+                        <input id="remove-name" type="text" placeholder="Name / phone / account" spellcheck="false"
+                               class="flex-1 bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface p-2 focus:border-error outline-none placeholder:text-outline-variant/60">
+                        <button id="btn-remove" class="bg-transparent text-error text-[10px] font-mono font-bold px-3 border border-error/60 hover:bg-error/10 transition-colors flex items-center gap-1 shrink-0">
+                            <span class="material-symbols-outlined text-[14px]">delete</span> REMOVE
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto" id="ledger-body">
+                    <div class="p-4 text-[11px] font-mono text-outline-variant text-center animate-pulse">LOADING LEDGER...</div>
                 </div>
             </div>
         </div>
@@ -228,7 +285,7 @@
             delay += 1000;
         } else {
             names.forEach(n => {
-                setTimeout(() => addLog(`> Found Person: <span class='text-primary'>${n} (Conf: 9${Math.floor(Math.random()*9)}%)</span>`, "text-on-surface"), delay);
+                setTimeout(() => addLog(`> Found Person: <span class='text-primary'>${n}</span> <span class='text-outline-variant'>(pattern match)</span>`, "text-on-surface"), delay);
                 delay += 800;
             });
             phones.forEach(p => {
@@ -256,6 +313,7 @@
                         body: JSON.stringify({ names, phones, banks })
                     });
                     addLog("[API] Kraken DB Cross-referenced Successfully.", "text-secondary-container");
+                    if (typeof refreshLedger === 'function') refreshLedger();
                 } catch(e) {
                     addLog("[ERROR] Backend connection failed.", "text-error");
                 }
@@ -286,5 +344,210 @@
             terminal.scrollTop = terminal.scrollHeight;
         }
     });
+
+    // ==========================================================
+    // LIVE GRAPH LEDGER -- add / remove / restore, sab turant graph par lagta hai
+    // ==========================================================
+    const TYPE_ICON = { person: 'person', phone: 'smartphone', bank: 'account_balance', location: 'place' };
+    const TYPE_COLOR = { person: 'primary-container', phone: 'secondary-fixed', bank: 'error', location: 'tertiary-fixed' };
+
+    function ledgerLog(msg, cls) {
+        const terminal = document.getElementById('terminal-output');
+        const cursor = document.getElementById('terminal-cursor');
+        const line = document.createElement('div');
+        line.className = cls || 'text-on-surface-variant';
+        line.innerHTML = msg;
+        if (cursor) terminal.insertBefore(line, cursor); else terminal.appendChild(line);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    async function api(path, body) {
+        const res = await fetch(path, {
+            method: body ? 'POST' : 'GET',
+            cache: 'no-store',
+            headers: body ? { 'Content-Type': 'application/json' } : undefined,
+            body: body ? JSON.stringify(body) : undefined
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.status !== 'success') {
+            throw new Error(data.message || `request failed (${res.status})`);
+        }
+        return data;
+    }
+
+    function renderLedger(data) {
+        const s = data.stats || {};
+        document.getElementById('ledger-counts').innerText =
+            `${s.persons} persons · ${s.phones} SIMs · ${s.accounts} accounts · ${s.confirmed_links} links`;
+
+        const badge = document.getElementById('ledger-saved');
+        if (badge && data.state) {
+            const edits = (data.state.uploads || 0) + (data.state.removals || 0);
+            badge.innerText = edits === 0 ? 'SOURCE' : `SAVED · ${edits} EDIT${edits === 1 ? '' : 'S'}`;
+            badge.className = `text-[9px] font-mono px-1 border ${edits === 0
+                ? 'text-outline-variant border-outline-variant/50'
+                : 'text-primary-container border-primary-container/50'}`;
+            badge.title = edits === 0
+                ? 'Graph matches the source dataset exactly'
+                : `${edits} manual edit(s) saved to ${data.state.path} — retained across restarts`;
+        }
+
+        const body = document.getElementById('ledger-body');
+        const added = data.added || [];
+        const removed = data.removed || [];
+        const droppedLinks = data.removed_links || [];
+        let html = '';
+
+        html += `<div class="px-3 py-2 bg-surface-container-low border-b border-outline-variant/40 flex justify-between items-center">
+                    <span class="text-[10px] font-mono text-primary-container tracking-widest">ADDED BY OPERATOR (${added.length})</span>
+                    <span class="text-[9px] font-mono text-outline-variant">${data.batches} upload${data.batches === 1 ? '' : 's'}</span>
+                 </div>`;
+        html += added.length === 0
+            ? `<div class="px-3 py-3 text-[10px] font-mono text-outline-variant">No manual entries yet. Extract entities from text, or use Quick Add above.</div>`
+            : added.map(x => `
+                <div class="px-3 py-2 border-b border-outline-variant/20 flex items-center justify-between gap-2 hover:bg-surface-container transition-colors">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="material-symbols-outlined text-[14px] text-${TYPE_COLOR[x.type] || 'outline'}">${TYPE_ICON[x.type] || 'hub'}</span>
+                        <div class="min-w-0">
+                            <div class="text-[11px] font-mono text-white truncate">${x.id}</div>
+                            <div class="text-[9px] font-mono text-outline-variant">
+                                ${x.type.toUpperCase()} · batch ${x.batch}${x.owner ? ` · owner ${x.owner}` : ''}${x.links !== undefined ? ` · ${x.links} link${x.links === 1 ? '' : 's'}` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="removeEntity('${x.id.replace(/'/g, "\\'")}')"
+                            class="text-error border border-error/40 px-2 py-0.5 text-[9px] font-mono hover:bg-error/10 transition-colors shrink-0">REMOVE</button>
+                </div>`).join('');
+
+        html += `<div class="px-3 py-2 bg-surface-container-low border-b border-t border-outline-variant/40 flex justify-between items-center">
+                    <span class="text-[10px] font-mono text-error tracking-widest">REMOVED (${removed.length + droppedLinks.length})</span>
+                    ${(removed.length + droppedLinks.length) ? `<button onclick="restoreAll()" class="text-[9px] font-mono text-primary-container border border-primary-container/40 px-2 py-0.5 hover:bg-primary-container/10 transition-colors">RESTORE ALL</button>` : ''}
+                 </div>`;
+        html += (removed.length === 0 && droppedLinks.length === 0)
+            ? `<div class="px-3 py-3 text-[10px] font-mono text-outline-variant">Nothing removed. The graph is complete.</div>`
+            : removed.map(x => `
+                <div class="px-3 py-2 border-b border-outline-variant/20 flex items-center justify-between gap-2 bg-error/5">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="material-symbols-outlined text-[14px] text-error">${TYPE_ICON[x.type] || 'hub'}</span>
+                        <div class="text-[11px] font-mono text-on-surface-variant line-through truncate">${x.id}</div>
+                    </div>
+                    <button onclick="restoreEntity('${x.id.replace(/'/g, "\\'")}')"
+                            class="text-primary-container border border-primary-container/40 px-2 py-0.5 text-[9px] font-mono hover:bg-primary-container/10 transition-colors shrink-0">RESTORE</button>
+                </div>`).join('')
+              + droppedLinks.map(pair => `
+                <div class="px-3 py-2 border-b border-outline-variant/20 text-[10px] font-mono text-on-surface-variant bg-error/5">
+                    <span class="line-through">${pair[0]} &harr; ${pair[1]}</span>
+                    <span class="text-[9px] text-outline-variant block">LINK REMOVED</span>
+                </div>`).join('');
+
+        body.innerHTML = html;
+    }
+
+    async function refreshLedger() {
+        try {
+            renderLedger(await api('/api/manual-log'));
+        } catch (e) {
+            document.getElementById('ledger-body').innerHTML =
+                `<div class="p-4 text-[11px] font-mono text-error text-center">LEDGER UNAVAILABLE: ${e.message}</div>`;
+        }
+    }
+
+    window.removeEntity = async function(name) {
+        try {
+            const res = await api('/api/remove-entity', { name });
+            ledgerLog(`[REMOVE] ${res.removed} (${res.type}) removed from graph &mdash; ${res.links_dropped} link(s) dropped.`, 'text-error');
+            await refreshLedger();
+        } catch (e) {
+            ledgerLog(`[ERROR] Remove failed: ${e.message}`, 'text-error');
+        }
+    };
+
+    window.restoreEntity = async function(name) {
+        try {
+            const res = await api('/api/restore-entity', { name });
+            ledgerLog(`[RESTORE] ${res.restored} restored to graph.`, 'text-primary-container');
+            await refreshLedger();
+        } catch (e) {
+            ledgerLog(`[ERROR] Restore failed: ${e.message}`, 'text-error');
+        }
+    };
+
+    window.restoreAll = async function() {
+        try {
+            const res = await api('/api/restore-entity', { all: true });
+            ledgerLog(`[RESTORE] ${res.restored} removal(s) reversed &mdash; graph complete.`, 'text-primary-container');
+            await refreshLedger();
+        } catch (e) {
+            ledgerLog(`[ERROR] Restore-all failed: ${e.message}`, 'text-error');
+        }
+    };
+
+    document.getElementById('btn-add').addEventListener('click', async function() {
+        const nameEl = document.getElementById('add-name');
+        const phoneEl = document.getElementById('add-phone');
+        const accEl = document.getElementById('add-account');
+        const names = nameEl.value.trim() ? [nameEl.value.trim()] : [];
+        const phones = phoneEl.value.trim() ? [phoneEl.value.trim()] : [];
+        const banks = accEl.value.trim() ? [accEl.value.trim()] : [];
+
+        if (!names.length && !phones.length && !banks.length) {
+            ledgerLog('[WARN] Quick Add is empty &mdash; complete at least one field.', 'text-secondary-container');
+            return;
+        }
+        try {
+            const res = await api('/api/update-graph', { names, phones, banks });
+            const a = res.added || {};
+            ledgerLog(`[ADD] +${a.persons || 0} person, +${a.phones || 0} SIM, +${a.accounts || 0} account, +${a.links || 0} link.`, 'text-primary-container');
+            nameEl.value = phoneEl.value = accEl.value = '';
+            await refreshLedger();
+        } catch (e) {
+            ledgerLog(`[ERROR] Add failed: ${e.message}`, 'text-error');
+        }
+    });
+
+    document.getElementById('btn-remove').addEventListener('click', function() {
+        const el = document.getElementById('remove-name');
+        const name = el.value.trim();
+        if (!name) {
+            ledgerLog('[WARN] Enter an entity name to remove.', 'text-secondary-container');
+            return;
+        }
+        window.removeEntity(name).then(() => { el.value = ''; });
+    });
+
+    document.getElementById('remove-name').addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('btn-remove').click();
+    });
+    ['add-name', 'add-phone', 'add-account'].forEach(id => {
+        document.getElementById(id).addEventListener('keydown', e => {
+            if (e.key === 'Enter') document.getElementById('btn-add').click();
+        });
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', async function() {
+        try {
+            const res = await api('/api/reset-graph', {});
+            ledgerLog(`[RESET] Cleared ${res.cleared_uploads} upload(s) and ${res.cleared_removals} removal(s) &mdash; graph restored to source dataset.`, 'text-secondary-container');
+            await refreshLedger();
+        } catch (e) {
+            ledgerLog(`[ERROR] Reset failed: ${e.message}`, 'text-error');
+        }
+    });
+
+    document.getElementById('btn-undo').addEventListener('click', async function() {
+        try {
+            const res = await api('/api/undo-intake');
+            const names = (res.undone.names || []).join(', ') || '(no names)';
+            ledgerLog(`[UNDO] Last upload reversed: ${names}`, 'text-secondary-container');
+            await refreshLedger();
+        } catch (e) {
+            ledgerLog(`[UNDO] ${e.message}`, 'text-secondary-container');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', refreshLedger);
+
 </script>
+<script src="/static/kraken_logout.js"></script>
+<script src="/static/kraken_header.js"></script>
 </body></html>

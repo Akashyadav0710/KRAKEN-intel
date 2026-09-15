@@ -69,7 +69,8 @@
     </div>
     <div class="flex items-center gap-4">
         <span class="text-[11px] font-mono text-secondary-container tracking-widest hidden lg:block border border-secondary-container/30 px-2 py-0.5 bg-secondary-container/5">CLEARANCE: OMEGA</span>
-        <a href="/"><button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors">SECURE LOGOUT</button></a>
+<div class="flex items-center gap-1"><button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">notifications</span></button><button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">settings</span></button></div>
+        <button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors" type="button" onclick="return krakenLogout(event);" title="Terminate session and return to secure access">SECURE LOGOUT</button>
     </div>
 </header>
 
@@ -100,7 +101,7 @@
     </div>
     
     <div class="p-4 border-t border-outline-variant/50 flex flex-col gap-3">
-        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]">NEW CASE</button>
+        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]" onclick="window.location.href='/intake'" title="Open the intake console to file new intelligence">NEW CASE</button>
     </div>
 </nav>
 
@@ -127,6 +128,26 @@
             
             <div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
                 
+                <div class="bg-surface border border-outline-variant p-6 relative overflow-hidden" id="case-roster-panel">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-error to-transparent"></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-[14px] font-mono font-bold text-error uppercase flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[18px]">folder_open</span>
+                            Open Cases <span class="text-outline-variant" id="case-count"></span>
+                        </h2>
+                        <a href="/reports" id="case-clear" class="hidden text-[9px] font-mono tracking-widest text-outline-variant hover:text-primary-container transition-colors no-print">CLEAR FILTER</a>
+                    </div>
+                    <div class="grid grid-cols-12 gap-2 px-3 py-1.5 bg-surface-container border-b border-outline-variant text-[9px] font-mono tracking-widest text-on-surface-variant uppercase">
+                        <div class="col-span-3">Case ID</div>
+                        <div class="col-span-4">Accused</div>
+                        <div class="col-span-3">Classification</div>
+                        <div class="col-span-2 text-right">RIS</div>
+                    </div>
+                    <div id="case-roster">
+                        <div class="p-4 text-center text-outline-variant font-mono text-[11px] animate-pulse">LOADING CASE FILES...</div>
+                    </div>
+                </div>
+
                 <div class="bg-surface border border-outline-variant p-6 h-full relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-transparent"></div>
                     <h2 class="text-[14px] font-mono font-bold text-primary-container uppercase mb-4 flex items-center gap-2">
@@ -135,18 +156,21 @@
                     
                     <div class="text-[12px] font-mono text-on-surface-variant leading-relaxed space-y-4 typewriter-text" id="report-text">
 <strong class="text-white">BACKGROUND:</strong>
-Cross-referencing FIR databases with recent Call Detail Records (CDRs) and financial logs has unveiled a highly structured cyber-fraud syndicate operating across multiple jurisdictions.
+<span id="report-background">Compiling case record...</span>
 
 <strong class="text-white">KEY ENTITIES IDENTIFIED:</strong>
-1. <strong class="text-error">Rachit Walla:</strong> Identified as a primary mastermind orchestrating the network. Risk score calculated at 98 (CRITICAL). Direct links to 7+ fraudulent bank nodes.
-2. <strong class="text-error">Advaith Yadav:</strong> Co-conspirator managing offshore shell accounts. Intercepted communications align with recent fund transfers.
-3. <strong class="text-secondary-container">Lakshit Luthra:</strong> Enforcer operating burner phone networks, primarily intercepted near high-density urban cell towers.
+<span id="report-entities">Reading case records...</span>
+
+<strong class="text-white">SYNDICATE STRUCTURE:</strong>
+<span id="report-syndicates">Running community detection...</span>
 
 <strong class="text-white">AI PREDICTIVE ANALYSIS:</strong>
-The Kraken engine successfully correlated seemingly isolated FIRs and generated 15 hidden links connecting the perpetrators. Funds are being actively moved into offshore hawala accounts to bypass traditional tracking systems.
+<span id="report-ai">Scoring unconfirmed links...</span>
 
-<strong class="text-white">CONCLUSION:</strong>
-Immediate action is recommended to freeze the identified banking nodes and deploy field agents to the high-density tower locations flagged in the CDR intercepts linked to Rachit Walla and Advaith Yadav.
+<strong class="text-white">RECOMMENDED ACTION:</strong>
+<span id="report-conclusion">Deriving recommendations from the case graph...</span>
+<span id="report-topnames" class="hidden"></span>
+<span id="report-linkcount" class="hidden"></span>
                     </div>
                 </div>
                 
@@ -159,15 +183,15 @@ Immediate action is recommended to freeze the identified banking nodes and deplo
                     <div class="space-y-4">
                         <div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
                             <span class="text-[11px] font-mono text-on-surface">Total Nodes Analyzed</span>
-                            <span class="text-[14px] font-mono font-bold text-primary-container">4,192</span>
+                            <span id="metric-nodes" class="text-[14px] font-mono font-bold text-primary-container">...</span>
                         </div>
                         <div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
                             <span class="text-[11px] font-mono text-on-surface">Syndicates Mapped</span>
-                            <span class="text-[14px] font-mono font-bold text-primary-container">04</span>
+                            <span id="metric-syndicates" class="text-[14px] font-mono font-bold text-primary-container">...</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-[11px] font-mono text-on-surface">AI Hidden Links Found</span>
-                            <span class="text-[14px] font-mono font-bold text-secondary-container flicker">15</span>
+                            <span id="metric-links" class="text-[14px] font-mono font-bold text-secondary-container flicker">...</span>
                         </div>
                     </div>
                 </div>
@@ -179,14 +203,7 @@ Immediate action is recommended to freeze the identified banking nodes and deplo
                         <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> EXPORT DOSSIER (PDF)
                     </button>
                     
-                    <button class="w-full bg-surface text-secondary-fixed text-[11px] font-mono py-3 hover:bg-surface-container-highest border border-secondary-fixed/50 transition-colors flex justify-center items-center gap-2">
-                        <span class="material-symbols-outlined text-[18px]">share</span> SECURE SHARE (INTERPOL)
-                    </button>
-                    
-                    <button class="w-full bg-surface text-error text-[11px] font-mono py-3 hover:bg-error/10 border border-error/50 transition-colors flex justify-center items-center gap-2">
-                        <span class="material-symbols-outlined text-[18px]">archive</span> ARCHIVE CASE
-                    </button>
-                </div>
+                    </div>
 
             </div>
             
@@ -223,4 +240,151 @@ Immediate action is recommended to freeze the identified banking nodes and deplo
         }, 1500);
     });
 </script>
+<script>
+    // Every figure on this page is read from the live database - nothing hardcoded.
+    const ROLE = {
+        "MASTERMIND": "Primary mastermind orchestrating the network.",
+        "HIGH VALUE": "High-value co-conspirator managing shell accounts and fund movement.",
+        "THREAT":     "Active threat coordinating operational activity across the syndicate.",
+        "ASSOCIATE":  "Associate operating support channels (burner handsets, courier routes)."
+    };
+
+    // ==========================================================
+    // EXECUTIVE SUMMARY -- poora text dataset se generate hota hai.
+    // Pehle yahan fixed prose thi ("offshore hawala accounts" jaise claims
+    // jinke liye data mein koi evidence hi nahi tha).
+    // ==========================================================
+    const rupees = n => '₹' + Number(n || 0).toLocaleString('en-IN');
+
+    (async function loadReportMetrics() {
+        try {
+            const [gRes, sRes, synRes, dRes] = await Promise.all([
+                fetch('/api/graph-data'),
+                fetch('/api/stats'),
+                fetch('/api/syndicates'),
+                fetch('/api/dossiers')
+            ]);
+            const g = await gRes.json();
+            const st = (await sRes.json()).stats || {};
+            const syn = await synRes.json();
+            const dossiers = (await dRes.json()).targets || [];
+
+            const nodes = (g.status === 'success' && g.entities && Array.isArray(g.entities.nodes))
+                ? g.entities.nodes.length : 0;
+            const preds = (g.status === 'success' && Array.isArray(g.predictions)) ? g.predictions : [];
+            const syndicates = (syn.syndicates || []);
+
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+            const setHtml = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
+
+            set('metric-nodes', nodes);
+            // Asli community count -- pehle yahan distinct prediction sources gine jate the
+            set('metric-syndicates', String(syndicates.length).padStart(2, '0'));
+            set('metric-links', preds.length);
+            set('report-linkcount', preds.length);
+
+            // ---- BACKGROUND ----
+            setHtml('report-background',
+                `Analysis of ${st.firs} FIRs, ${st.calls_processed} call detail records and ` +
+                `${st.transfers_processed} financial transactions has produced a single linked case graph of ` +
+                `${st.persons} persons, ${st.phones} handsets, ${st.accounts} bank accounts and ` +
+                `${st.locations} locations, joined by ${st.confirmed_links} corroborated links ` +
+                `(${st.co_accused_links} FIR co-accused, ${st.call_links} CDR, ${st.money_links} financial, ` +
+                `${st.tower_links} tower co-location). Recorded transfers total ${rupees(st.money_volume)}.`);
+
+            // ---- KEY ENTITIES (asli numbers, invented role prose nahi) ----
+            const top = dossiers.slice(0, 5);
+            setHtml('report-entities', top.length === 0
+                ? 'No subjects currently on file.'
+                : top.map((x, i) =>
+                    `${i + 1}. <strong class="text-${x.color}">${x.name}</strong> &mdash; ${x.badge}, risk score ${x.score}. ` +
+                    `${x.associates} confirmed associates; ${(x.firs || []).length} FIR${(x.firs || []).length === 1 ? '' : 's'}; ` +
+                    `${x.calls} CDR records; ${rupees(x.sent)} sent, ${rupees(x.received)} received. ` +
+                    `Handsets on record: ${(x.phones || []).length}; accounts: ${(x.accounts || []).length}.`
+                  ).join('\n'));
+
+            // ---- SYNDICATE STRUCTURE ----
+            setHtml('report-syndicates', syndicates.length === 0
+                ? 'No community structure resolved from the confirmed links.'
+                : `Louvain community detection over the confirmed links resolves the network into ` +
+                  `${syndicates.length} distinct groups (modularity Q=${Number(syn.modularity).toFixed(3)}).\n` +
+                  syndicates.map(s =>
+                    `&bull; <strong class="text-white">${s.name}</strong> &mdash; ${s.size} members, ` +
+                    `${s.internal_links} internal links (cohesion ${s.cohesion}%), primary trail ` +
+                    `${s.dominant_trail.toLowerCase()}. Combined outflow ${rupees(s.turnover)}. ` +
+                    `Tower activity: ${(s.territory || []).slice(0, 3).join(', ') || 'none on record'}.`
+                  ).join('\n'));
+
+            // ---- AI PREDICTIVE ANALYSIS ----
+            const best = preds[0];
+            setHtml('report-ai', preds.length === 0
+                ? 'No unconfirmed links met the prediction threshold.'
+                : `${preds.length} high-probability links are predicted but not yet corroborated by evidence. ` +
+                  `The strongest is <strong class="text-white">${best.source}</strong> &harr; ` +
+                  `<strong class="text-white">${best.target}</strong> at ${Number(best.confidence).toFixed(1)}% ` +
+                  `confidence (${best.reasoning}). These are investigative leads, not established facts.`);
+
+            // ---- CONCLUSION (recommendations jo data se nikalti hain) ----
+            const names = dossiers.slice(0, 2).map(x => x.name).join(' and ');
+            const towers = {};
+            syndicates.forEach(s => (s.territory || []).forEach(t => { towers[t] = (towers[t] || 0) + 1; }));
+            const hotTowers = Object.entries(towers).sort((a, b) => b[1] - a[1]).slice(0, 3).map(t => t[0]);
+            setHtml('report-conclusion',
+                `Priority action against ${names || 'the highest-scoring subjects'}: freeze the ` +
+                `${st.accounts} identified accounts and seek production orders for the ` +
+                `${st.phones} handsets on record. Deploy field verification at ` +
+                `${hotTowers.join(', ') || 'the flagged tower sites'}, which carry the highest ` +
+                `co-location activity across syndicates. ${st.calls_unattributed} of ` +
+                `${st.calls_processed} intercepted calls remain unattributed to a registered ` +
+                `subscriber and require a telecom lookup before the graph can be considered complete.`);
+
+            const topEl = document.getElementById('report-topnames');
+            if (topEl && names) topEl.innerText = names;
+        } catch (err) {
+            console.error('Report generation failed:', err);
+            const el = document.getElementById('report-background');
+            if (el) el.innerText = 'Report generation failed: the case database is unreachable.';
+        }
+    })();
+
+    // OPEN CASES roster - driven by the case database (/api/targets)
+    (async function loadCaseRoster() {
+        const box = document.getElementById('case-roster');
+        if (!box) return;
+        try {
+            const res  = await fetch('/api/targets');
+            const data = await res.json();
+            let cases = (data.status === 'success' && Array.isArray(data.targets)) ? data.targets.slice() : [];
+
+            const filter = (new URLSearchParams(window.location.search).get('filter') || '').trim().toLowerCase();
+            if (filter === 'flags') cases = cases.filter(t => t.score >= 90);
+
+            const clearEl = document.getElementById('case-clear');
+            if (filter && clearEl) clearEl.classList.remove('hidden');
+
+            cases.sort((a, b) => b.score - a.score);
+            const countEl = document.getElementById('case-count');
+            if (countEl) countEl.innerText = `(${cases.length})`;
+
+            if (cases.length === 0) {
+                box.innerHTML = '<div class="p-4 text-center text-outline-variant font-mono text-[11px]">NO OPEN CASES IN DATABASE.</div>';
+                return;
+            }
+
+            box.innerHTML = cases.map(t => `
+                <a href="/profile?target=${encodeURIComponent(t.name)}"
+                   class="grid grid-cols-12 gap-2 px-3 py-2 items-center text-[11px] font-mono border-b border-outline-variant/30 hover:bg-surface-container transition-colors">
+                    <div class="col-span-3 text-outline-variant">${t.id}</div>
+                    <div class="col-span-4 font-bold text-${t.color} truncate">${t.name}</div>
+                    <div class="col-span-3 text-on-surface-variant truncate">${t.badge}</div>
+                    <div class="col-span-2 text-right text-${t.color} font-bold">${t.score}</div>
+                </a>`).join('');
+        } catch (err) {
+            console.error(err);
+            box.innerHTML = '<div class="p-4 text-center text-error font-mono text-[11px]">CASE DATABASE OFFLINE.</div>';
+        }
+    })();
+</script>
+<script src="/static/kraken_logout.js"></script>
+<script src="/static/kraken_header.js"></script>
 </body></html>

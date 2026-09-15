@@ -66,10 +66,10 @@
         <div class="flex items-center gap-1">
             <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
             <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">settings</span></button>
-            <button class="p-2 text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">terminal</span></button>
+            <button class="p-2 text-primary-container transition-colors" onclick="window.location.href='/intake'" title="NLP intake terminal"><span class="material-symbols-outlined text-[20px]">terminal</span></button>
         </div>
         <div class="w-px h-6 bg-outline-variant mx-2"></div>
-        <a href="/"><button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors">SECURE LOGOUT</button></a>
+        <button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors" type="button" onclick="return krakenLogout(event);" title="Terminate session and return to secure access">SECURE LOGOUT</button>
     </div>
 </header>
 
@@ -103,7 +103,7 @@
     </div>
 
     <div class="p-4 border-t border-outline-variant/50 flex flex-col gap-3">
-        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]">NEW CASE</button>
+        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]" onclick="window.location.href='/intake'" title="Open the intake console to file new intelligence">NEW CASE</button>
         <div class="flex justify-between items-center text-[11px] font-mono mt-2">
             <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">code</span> Terminal</a>
             <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">help</span> Support</a>
@@ -122,7 +122,7 @@
         </div>
         <!-- Iska apna alag scroll hai -->
         <div class="flex-1 overflow-y-auto" id="target-list">
-            <div class="p-6 text-center text-outline-variant font-mono text-[12px] animate-pulse">ANALYZING PREDICTIONS...</div>
+            <div class="p-6 text-center text-outline-variant font-mono text-[12px] animate-pulse">RUNNING COMMUNITY DETECTION...</div>
         </div>
     </div>
 
@@ -135,7 +135,7 @@
                 <h2 class="text-[24px] font-mono font-bold text-white tracking-tight uppercase" id="org-title">SELECT A SYNDICATE</h2>
                 <span class="text-[12px] font-mono text-outline-variant" id="org-status">AWAITING SELECTION...</span>
             </div>
-            <button class="bg-surface-container border border-outline-variant px-4 py-2 text-[11px] font-mono hover:border-primary-container hover:text-primary-container transition-colors">EXPORT DOSSIER</button>
+            <button id="btn-export-syndicate" class="bg-surface-container border border-outline-variant px-4 py-2 text-[11px] font-mono hover:border-primary-container hover:text-primary-container transition-colors" title="Download the selected syndicate as a case dossier">EXPORT DOSSIER</button>
         </div>
 
         <!-- DYNAMIC ORG CHART WRAPPER -->
@@ -147,70 +147,92 @@
 </main>
 
 <script>
+    // ==========================================================
+    // SYNDICATES = asli communities (Louvain), na ki predictions ka grouping.
+    // Har syndicate ka boss graph influence se nikalta hai, aur hierarchy
+    // boss se BFS karke -- to levels asli link distance dikhate hain.
+    // ==========================================================
     let syndicatesData = {};
+    let syndicateMeta = { modularity: 0, algorithm: '', resolution: 1 };
+
+    const TRAIL_ICON = {
+        'FIR CO-ACCUSED': 'gavel',
+        'HAWALA / MONEY': 'currency_rupee',
+        'CDR TRAFFIC': 'call',
+        'FIELD INTEL': 'upload_file'
+    };
+    const KIND_LABEL = {
+        co_accused: 'FIR', money: 'MONEY', call: 'CDR', intake: 'INTEL'
+    };
+    const LEVEL_LABEL = {
+        1: 'LEVEL 1 &middot; DIRECT REPORTS',
+        2: 'LEVEL 2 &middot; SECOND RING',
+        3: 'LEVEL 3 &middot; OUTER RING',
+        99: 'PERIPHERAL &middot; NO INTERNAL PATH'
+    };
 
     async function loadDynamicSyndicates() {
+        const listContainer = document.getElementById('target-list');
         try {
-            const res = await fetch('/api/graph-data');
+            const res = await fetch('/api/syndicates');
             const data = await res.json();
-            
-            if (data.status === 'success' && data.predictions) {
-                // Group predictions by Source (person_a) to form distinct Cartels
-                data.predictions.forEach(p => {
-                    const bossName = p.source;
-                    if(!syndicatesData[bossName]) {
-                        syndicatesData[bossName] = [];
-                    }
-                    syndicatesData[bossName].push(p);
-                });
+            if (data.status !== 'success') throw new Error(data.message || 'detection failed');
 
-                // Generate Left Sidebar dynamically based on groups
-                const listContainer = document.getElementById('target-list');
-                listContainer.innerHTML = '';
-                
-                let isFirst = true;
-                let colorIndex = 0;
-                const colors = ['error', 'secondary-container', 'primary-container', 'tertiary-container'];
+            syndicateMeta = {
+                modularity: data.modularity,
+                algorithm: data.algorithm,
+                resolution: data.resolution,
+                unaffiliated: data.unaffiliated || []
+            };
 
-                for (const [bossName, links] of Object.entries(syndicatesData)) {
-                    // Only show as a syndicate if they have connections
-                    if (links.length > 0) {
-                        const color = colors[colorIndex % colors.length];
-                        
-                        listContainer.innerHTML += `
-                            <div class="p-4 border-b border-outline-variant/30 cursor-pointer hover:bg-surface-container transition-colors border-l-2 border-l-transparent syndicate-btn" 
-                                 onclick="renderSyndicate('${bossName}', this, '${color}')">
-                                <div class="flex justify-between items-start mb-1">
-                                    <span class="text-[14px] font-mono font-bold text-white uppercase truncate pr-2">${bossName} CARTEL</span>
-                                    <span class="text-[10px] font-mono bg-${color}/10 text-${color} px-1 border border-${color} shrink-0">TIER-${colorIndex + 1}</span>
-                                </div>
-                                <div class="text-[10px] font-mono text-outline-variant">TYPE: AI Linked • ${links.length} Targets</div>
-                            </div>
-                        `;
-                        colorIndex++;
-                        
-                        // Auto-load the first one
-                        if(isFirst) {
-                            setTimeout(() => {
-                                listContainer.firstElementChild.click();
-                            }, 100);
-                            isFirst = false;
-                        }
-                    }
-                }
-                
-                if (Object.keys(syndicatesData).length === 0) {
-                    listContainer.innerHTML = `<div class="p-6 text-center text-outline-variant font-mono text-[12px]">NO LINKS DETECTED</div>`;
-                }
+            const found = data.syndicates || [];
+            listContainer.innerHTML = '';
+
+            if (found.length === 0) {
+                listContainer.innerHTML = `<div class="p-6 text-center text-outline-variant font-mono text-[12px]">NO COMMUNITY STRUCTURE DETECTED</div>`;
+                return;
             }
+
+            // Detection ka summary -- judges ko dikhta hai ki ye asli algorithm hai
+            listContainer.innerHTML += `
+                <div class="px-4 py-3 border-b border-outline-variant/50 bg-surface-container-low">
+                    <div class="text-[10px] font-mono text-primary-container tracking-widest">LOUVAIN COMMUNITY DETECTION</div>
+                    <div class="text-[10px] font-mono text-outline-variant mt-1">
+                        ${found.length} syndicates &middot; modularity Q=${Number(syndicateMeta.modularity).toFixed(3)}
+                        ${syndicateMeta.unaffiliated.length ? ` &middot; ${syndicateMeta.unaffiliated.length} unaffiliated` : ''}
+                    </div>
+                </div>`;
+
+            const colors = ['error', 'secondary-container', 'primary-container', 'tertiary-container'];
+            found.forEach((syn, index) => {
+                syndicatesData[syn.id] = syn;
+                const color = colors[index % colors.length];
+                syn._color = color;
+                listContainer.innerHTML += `
+                    <div class="p-4 border-b border-outline-variant/30 cursor-pointer hover:bg-surface-container transition-colors border-l-2 border-l-transparent syndicate-btn"
+                         onclick="renderSyndicate('${syn.id}', this, '${color}')">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-[14px] font-mono font-bold text-white uppercase truncate pr-2">${syn.name}</span>
+                            <span class="text-[10px] font-mono bg-${color}/10 text-${color} px-1 border border-${color} shrink-0">TIER-${syn.tier}</span>
+                        </div>
+                        <div class="text-[10px] font-mono text-outline-variant flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[12px]">${TRAIL_ICON[syn.dominant_trail] || 'hub'}</span>
+                            ${syn.size} members &middot; ${syn.internal_links} internal links
+                        </div>
+                        <div class="text-[10px] font-mono text-${color} mt-0.5">COHESION ${syn.cohesion}% &middot; ${syn.dominant_trail}</div>
+                    </div>`;
+            });
+
+            // Pehla syndicate apne aap khol do
+            const first = listContainer.querySelector('.syndicate-btn');
+            if (first) setTimeout(() => first.click(), 100);
         } catch (e) {
-            console.error("Kraken DB SYNC ERROR: ", e);
+            console.error('Community detection failed:', e);
+            listContainer.innerHTML = `<div class="p-6 text-center text-error font-mono text-[12px]">DETECTION ENGINE OFFLINE</div>`;
         }
     }
 
-    // This dynamically renders the tree based on ANY number of targets
-    window.renderSyndicate = function(bossName, element, color) {
-        // Handle Sidebar Highlighting
+    window.renderSyndicate = function(synId, element, color) {
         document.querySelectorAll('.syndicate-btn').forEach(div => {
             div.classList.remove('bg-surface-container-highest', 'border-l-error', 'border-l-secondary-container', 'border-l-primary-container', 'border-l-tertiary-container');
             div.classList.add('border-l-transparent');
@@ -218,61 +240,173 @@
         element.classList.add('bg-surface-container-highest', `border-l-${color}`);
         element.classList.remove('border-l-transparent');
 
-        const links = syndicatesData[bossName] || [];
+        const syn = syndicatesData[synId];
+        if (!syn) return;
+        selectedSyndicateId = synId;
 
-        // Update Top Title
-        document.getElementById('org-title').innerText = `${bossName} NETWORK`;
+        document.getElementById('org-title').innerText = `${syn.boss} NETWORK`;
         document.getElementById('org-title').className = `text-[24px] font-mono font-bold text-${color} tracking-tight uppercase`;
-        document.getElementById('org-status').innerText = `STATUS: ACTIVE • ${links.length} IDENTIFIED TARGETS`;
+        document.getElementById('org-status').innerHTML =
+            `${syn.size} MEMBERS &middot; ${syn.internal_links} INTERNAL / ${syn.external_links} EXTERNAL LINKS &middot; COHESION ${syn.cohesion}% &middot; Q=${Number(syndicateMeta.modularity).toFixed(3)}`;
         document.getElementById('org-status').className = `text-[12px] font-mono text-${color}`;
 
-        // Generate Target Cards dynamically
-        let associatesHTML = '';
-        links.forEach(link => {
-            const conf = link.confidence > 1 ? link.confidence.toFixed(1) : (link.confidence * 100).toFixed(1);
-            associatesHTML += `
-                <div class="flex flex-col items-center w-40 m-2 group cursor-pointer shrink-0 z-10 relative">
-                    <div class="tree-branch-v -mt-[15px] mb-[0px]"></div>
-                    <span class="text-[10px] font-mono text-${color} tracking-widest mb-1">TARGET</span>
-                    <div class="w-full bg-surface-container border border-outline-variant p-3 text-center group-hover:border-${color} transition-colors">
-                        <span class="material-symbols-outlined text-outline-variant group-hover:text-${color} text-[24px] transition-colors">person_search</span>
-                        <h3 class="text-[12px] font-mono font-bold text-white uppercase mt-1 truncate w-full px-1" title="${link.target}">${link.target}</h3>
-                    </div>
-                    <div class="w-full bg-surface-container-low border border-outline-variant p-2 text-center mt-[-1px]">
-                        <p class="text-[10px] font-mono text-on-surface-variant">${conf}% Conf.</p>
-                    </div>
-                </div>
-            `;
+        const boss = syn.members.find(m => m.level === 0) || { name: syn.boss, score: 0, phones: [], accounts: [] };
+
+        // Members ko asli link-distance ke hisaab se rows mein baanto
+        const levels = {};
+        syn.members.filter(m => m.level !== 0).forEach(m => {
+            (levels[m.level] = levels[m.level] || []).push(m);
         });
 
-        // Inject Full Tree
+        const card = (m) => `
+            <div class="flex flex-col items-center w-44 m-2 group cursor-pointer shrink-0 z-10 relative"
+                 onclick="window.location.href='/profile'">
+                <div class="tree-branch-v -mt-[15px] mb-[0px]"></div>
+                <span class="text-[10px] font-mono text-${color} tracking-widest mb-1">${m.role}</span>
+                <div class="w-full bg-surface-container border border-outline-variant p-3 text-center group-hover:border-${color} transition-colors">
+                    <span class="material-symbols-outlined text-outline-variant group-hover:text-${color} text-[24px] transition-colors">person_search</span>
+                    <h3 class="text-[12px] font-mono font-bold text-white uppercase mt-1 truncate w-full px-1" title="${m.name}">${m.name}</h3>
+                    <div class="text-[9px] font-mono text-outline-variant mt-1">RIS ${m.score} &middot; ${m.associates} assoc</div>
+                </div>
+                <div class="w-full bg-surface-container-low border border-outline-variant p-2 text-center mt-[-1px]">
+                    <p class="text-[9px] font-mono text-on-surface-variant truncate" title="linked via ${m.via}">
+                        ${m.via ? `via ${m.via}` : 'no internal path'}
+                    </p>
+                    <p class="text-[9px] font-mono text-${color}">
+                        ${(m.link_kinds || []).map(k => KIND_LABEL[k] || k).join(' + ') || '--'}
+                        ${m.link_strength ? ` &middot; w${m.link_strength}` : ''}
+                    </p>
+                </div>
+            </div>`;
+
+        const rows = Object.keys(levels).sort((a, b) => a - b).map(lv => `
+            <div class="w-full flex flex-col items-center mt-2">
+                <div class="text-[10px] font-mono text-outline-variant tracking-widest mb-1 mt-4">${LEVEL_LABEL[lv] || `LEVEL ${lv}`}</div>
+                <div class="w-full relative flex justify-center">
+                    <div class="tree-branch-h absolute top-0 w-[calc(100%-10rem)] max-w-[80%]"></div>
+                </div>
+                <div class="flex flex-wrap justify-center w-full max-w-5xl gap-y-4 mt-[15px]">
+                    ${levels[lv].map(card).join('')}
+                </div>
+            </div>`).join('');
+
+        // Evidence summary -- ye syndicate kis trail par bana hai
+        const mix = Object.entries(syn.link_mix || {})
+            .map(([k, n]) => `${KIND_LABEL[k] || k}: ${n}`).join(' &middot; ');
+
         document.getElementById('org-chart').innerHTML = `
-            <!-- BOSS LEVEL -->
+            <div class="w-full max-w-5xl mb-6 grid grid-cols-2 md:grid-cols-4 gap-3 min-w-[600px]">
+                <div class="border border-outline-variant bg-surface p-3">
+                    <div class="text-[9px] font-mono text-outline-variant tracking-widest">PRIMARY TRAIL</div>
+                    <div class="text-[12px] font-mono text-${color} font-bold mt-1">${syn.dominant_trail}</div>
+                    <div class="text-[9px] font-mono text-outline-variant mt-1">${mix}</div>
+                </div>
+                <div class="border border-outline-variant bg-surface p-3">
+                    <div class="text-[9px] font-mono text-outline-variant tracking-widest">TERRITORY (TOWERS)</div>
+                    <div class="text-[11px] font-mono text-white mt-1">${(syn.territory || []).join(', ') || '--'}</div>
+                </div>
+                <div class="border border-outline-variant bg-surface p-3">
+                    <div class="text-[9px] font-mono text-outline-variant tracking-widest">COMBINED OUTFLOW</div>
+                    <div class="text-[12px] font-mono text-white font-bold mt-1">₹${Number(syn.turnover).toLocaleString('en-IN')}</div>
+                </div>
+                <div class="border border-outline-variant bg-surface p-3">
+                    <div class="text-[9px] font-mono text-outline-variant tracking-widest">SHARED FIRs</div>
+                    <div class="text-[12px] font-mono text-white font-bold mt-1">${(syn.shared_firs || []).length}</div>
+                    <div class="text-[9px] font-mono text-outline-variant mt-1 truncate" title="${(syn.shared_firs || []).join(', ')}">${(syn.shared_firs || []).slice(0, 2).join(', ') || '--'}</div>
+                </div>
+            </div>
+
             <div class="flex flex-col items-center group cursor-pointer z-10 relative">
                 <span class="text-[10px] font-mono text-${color} tracking-widest mb-1">MASTERMIND / BOSS</span>
                 <div class="w-64 bg-[#171c24] border-2 border-${color} p-4 text-center shadow-[0_0_15px_rgba(0,0,0,0.5)]">
                     <span class="material-symbols-outlined text-${color} text-[32px] mb-2 flicker">military_tech</span>
-                    <h3 class="text-[18px] font-mono font-bold text-white uppercase">${bossName}</h3>
-                    <p class="text-[11px] font-mono text-outline-variant mt-1">Direct Nodes: ${links.length}</p>
+                    <h3 class="text-[18px] font-mono font-bold text-white uppercase">${boss.name}</h3>
+                    <p class="text-[11px] font-mono text-outline-variant mt-1">RIS ${boss.score} &middot; ${boss.associates} associates</p>
+                    <p class="text-[9px] font-mono text-outline-variant mt-1 truncate" title="${(boss.phones || []).join(', ')}">${(boss.phones || [])[0] || 'no SIM on record'}</p>
                 </div>
             </div>
 
-            <!-- CONNECTOR LINE DOWN -->
             <div class="tree-line"></div>
-            
-            <!-- HORIZONTAL BRANCH (Dynamically wide based on content) -->
-            <div class="w-full relative flex justify-center mt-[0px]">
-                <!-- Make line almost as wide as the flex container, minus margins -->
-                <div class="tree-branch-h absolute top-0 w-[calc(100%-10rem)] max-w-[80%]"></div>
-            </div>
+            ${rows}
 
-            <!-- DYNAMIC ASSOCIATES FLEX CONTAINER -->
-            <div class="flex flex-wrap justify-center w-full max-w-5xl gap-y-6 mt-[15px]">
-                ${associatesHTML}
-            </div>
+            ${(syn.predictions || []).length ? `
+            <div class="w-full max-w-5xl mt-10 border border-secondary-container/40 bg-secondary-container/5 p-4 min-w-[600px]">
+                <div class="text-[10px] font-mono text-secondary-container tracking-widest mb-2">AI-PREDICTED INTERNAL LINKS (NOT YET CONFIRMED)</div>
+                ${syn.predictions.map(p => `
+                    <div class="text-[11px] font-mono text-on-surface-variant border-b border-outline-variant/20 py-1">
+                        <span class="text-white">${p.source}</span> &harr; <span class="text-white">${p.target}</span>
+                        <span class="text-secondary-container">${Number(p.confidence).toFixed(1)}%</span>
+                        <span class="text-outline-variant block text-[9px]">${p.reasoning}</span>
+                    </div>`).join('')}
+            </div>` : ''}
         `;
     };
 
+
+    // EXPORT DOSSIER -- selected syndicate ka asli text dossier download karta hai
+    let selectedSyndicateId = null;
+
+    function exportSyndicate() {
+        const syn = syndicatesData[selectedSyndicateId];
+        if (!syn) {
+            alert('Select a syndicate first.');
+            return;
+        }
+        const rupees = n => '\u20b9' + Number(n || 0).toLocaleString('en-IN');
+        const lines = [];
+        lines.push('KRAKEN CASE DOSSIER');
+        lines.push('===================================================');
+        lines.push('SYNDICATE : ' + syn.name + '  (' + syn.id + ', TIER-' + syn.tier + ')');
+        lines.push('GENERATED : ' + new Date().toISOString());
+        lines.push('METHOD    : Louvain community detection, modularity Q=' + Number(syndicateMeta.modularity).toFixed(3));
+        lines.push('');
+        lines.push('SUMMARY');
+        lines.push('  Members          : ' + syn.size);
+        lines.push('  Internal links   : ' + syn.internal_links);
+        lines.push('  External links   : ' + syn.external_links);
+        lines.push('  Cohesion         : ' + syn.cohesion + '%');
+        lines.push('  Primary trail    : ' + syn.dominant_trail);
+        lines.push('  Combined outflow : ' + rupees(syn.turnover));
+        lines.push('  Tower activity   : ' + (syn.territory || []).join(', '));
+        lines.push('  Shared FIRs      : ' + ((syn.shared_firs || []).join(', ') || 'none'));
+        lines.push('');
+        lines.push('MEMBERS');
+        (syn.members || []).forEach(m => {
+            lines.push('  [' + m.role + '] ' + m.name + '  (RIS ' + m.score + ', ' + m.associates + ' associates)');
+            if (m.via) lines.push('      linked via ' + m.via + ' - ' + (m.link_kinds || []).join(' + '));
+            if ((m.firs || []).length) lines.push('      FIRs: ' + m.firs.join(', '));
+            if ((m.phones || []).length) lines.push('      SIMs: ' + m.phones.join(', '));
+            if ((m.accounts || []).length) lines.push('      Accounts: ' + m.accounts.join(', '));
+        });
+        if ((syn.predictions || []).length) {
+            lines.push('');
+            lines.push('AI-PREDICTED INTERNAL LINKS (UNCONFIRMED)');
+            syn.predictions.forEach(p => {
+                lines.push('  ' + p.source + ' <-> ' + p.target + '  ' + Number(p.confidence).toFixed(1) + '%');
+                lines.push('      ' + p.reasoning);
+            });
+        }
+        lines.push('');
+        lines.push('Source: ' + (syndicateMeta.algorithm || 'Kraken case graph'));
+
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = syn.id + '_' + syn.boss.replace(/\s+/g, '_') + '_dossier.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('btn-export-syndicate');
+        if (btn) btn.addEventListener('click', exportSyndicate);
+    });
+
     document.addEventListener("DOMContentLoaded", loadDynamicSyndicates);
 </script>
+<script src="/static/kraken_logout.js"></script>
+<script src="/static/kraken_header.js"></script>
 </body></html>

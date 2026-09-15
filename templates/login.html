@@ -215,6 +215,8 @@
 <!-- Hover Effect Overlay -->
 <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
 </button>
+<!-- Auth Error Line -->
+<p class="hidden text-status-sm font-status-sm text-error uppercase tracking-widest text-center -mt-1" id="auth-error"></p>
 </form>
 </div>
 <!-- Bottom Accent Line -->
@@ -268,25 +270,85 @@
         
         setTimeout(addLog, 1000);
 
-        // Simulated Authentication Interaction
-        function initiateHandshake() {
-            const btn = document.getElementById('auth-btn');
-            
+        // REAL Authentication: server session banata hai, tab hi baaki pages khulte hain
+        const IDLE_BTN = `<span class="relative z-10 flex items-center gap-2"><span class="material-symbols-outlined text-[16px]">login</span> INITIATE HANDSHAKE</span>`;
+        let authBusy = false;
+
+        function setVerifying(btn) {
+            btn.disabled = true;
             btn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span> VERIFYING HASH...`;
-            btn.classList.remove('bg-primary-container', 'text-on-primary-container');
+            btn.classList.remove('bg-primary-container', 'text-on-primary-container', 'bg-error', 'text-on-error');
             btn.classList.add('bg-surface-variant', 'text-primary-container', 'border-primary-container', 'animate-pulse');
-            
+        }
+
+        function setGranted(btn) {
+            btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">lock_open</span> ACCESS GRANTED`;
+            btn.classList.remove('bg-surface-variant', 'text-primary-container', 'border-primary-container', 'animate-pulse');
+            btn.classList.add('bg-primary', 'text-on-primary', 'shadow-[0_0_20px_rgba(219,252,255,0.6)]');
+        }
+
+        function setDenied(btn, message) {
+            btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">gpp_bad</span> ACCESS DENIED`;
+            btn.classList.remove('bg-surface-variant', 'text-primary-container', 'border-primary-container', 'animate-pulse');
+            btn.classList.add('bg-error', 'text-on-error');
+
+            const err = document.getElementById('auth-error');
+            if (err) {
+                err.textContent = message || 'HANDSHAKE REJECTED';
+                err.classList.remove('hidden');
+            }
+
+            // 1.6s baad button reset -> operator dobara try kar sakta hai
             setTimeout(() => {
-                btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">lock_open</span> ACCESS GRANTED`;
-                btn.classList.remove('bg-surface-variant', 'text-primary-container', 'border-primary-container', 'animate-pulse');
-                btn.classList.add('bg-primary', 'text-on-primary', 'shadow-[0_0_20px_rgba(219,252,255,0.6)]');
-                
-                // REDIRECT LOGIC: Access Granted ke 1 second baad Command page par bhej dega
-                setTimeout(() => {
-                    window.location.href = "/command";
-                }, 1000);
-                
-            }, 2000);
+                authBusy = false;
+                btn.disabled = false;
+                btn.innerHTML = IDLE_BTN;
+                btn.classList.remove('bg-error', 'text-on-error');
+                btn.classList.add('bg-primary-container', 'text-on-primary-container');
+            }, 1600);
+        }
+
+        async function initiateHandshake() {
+            if (authBusy) return;
+            authBusy = true;
+
+            const btn = document.getElementById('auth-btn');
+            const err = document.getElementById('auth-error');
+            if (err) err.classList.add('hidden');
+            setVerifying(btn);
+
+            const payload = {
+                clearance_id: document.getElementById('clearance_id').value,
+                biometric_key: document.getElementById('biometric_key').value,
+                next: new URLSearchParams(window.location.search).get('next')
+            };
+
+            // Handshake ka dramatic feel bana rahe: minimum 1.2s verifying animation
+            const minDelay = new Promise(r => setTimeout(r, 1200));
+
+            let res, data;
+            try {
+                res = await fetch('/api/login', {
+                    method: 'POST',
+                    cache: 'no-store',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                data = await res.json().catch(() => ({}));
+            } catch (e) {
+                await minDelay;
+                setDenied(btn, 'KRAKEN CORE OFFLINE');
+                return;
+            }
+
+            await minDelay;
+
+            if (res.ok && data.status === 'success') {
+                setGranted(btn);
+                setTimeout(() => { window.location.href = data.redirect || '/command'; }, 1000);
+            } else {
+                setDenied(btn, data.message);
+            }
         }
     </script>
 </body></html>

@@ -51,7 +51,8 @@
     <div class="text-[24px] font-bold tracking-tighter text-primary-container">Kraken</div>
     <div class="flex items-center gap-4">
         <span class="text-[11px] font-mono text-secondary-container tracking-widest hidden lg:block border border-secondary-container/30 px-2 py-0.5 bg-secondary-container/5">CLEARANCE: OMEGA</span>
-        <a href="/"><button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors">SECURE LOGOUT</button></a>
+<div class="flex items-center gap-1"><button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">notifications</span></button><button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">settings</span></button></div>
+        <button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors" type="button" onclick="return krakenLogout(event);" title="Terminate session and return to secure access">SECURE LOGOUT</button>
     </div>
 </header>
 
@@ -85,7 +86,8 @@
     <!-- Left Column: DYNAMIC Target Roster -->
     <div class="w-72 h-full bg-surface-container-low border-r border-outline-variant flex flex-col shrink-0">
         <div class="p-4 border-b border-outline-variant shrink-0">
-            <span class="text-[11px] font-mono tracking-widest text-primary-container">ACTIVE TARGETS (LIVE DB)</span>
+            <span class="text-[11px] font-mono tracking-widest text-primary-container" id="roster-title">ACTIVE TARGETS (LIVE DB)</span>
+            <a href="/profile" id="roster-clear" class="hidden mt-2 text-[9px] font-mono tracking-widest text-outline-variant hover:text-primary-container transition-colors items-center gap-1"><span class="material-symbols-outlined text-[12px]">close</span> CLEAR FILTER</a>
         </div>
         <div class="flex-1 overflow-y-auto" id="target-list">
             <div class="p-6 text-center text-outline-variant animate-pulse font-mono text-[12px]">SYNCING WITH DATABASE...</div>
@@ -145,20 +147,44 @@
 
                 <!-- Radar & Trans -->
                 <div class="col-span-12 lg:col-span-6 flex flex-col gap-6">
-                    <!-- Radar -->
-                    <div class="bg-surface border border-outline-variant h-48 flex flex-col relative overflow-hidden shrink-0">
-                        <div class="absolute top-3 left-4 z-10 flex items-center gap-2">
+                    <!-- ASSOCIATION RADAR: har blip ek asli associate hai.
+                         Center = target. Andar wala = strongest link. Sector = evidence type. -->
+                    <div class="bg-surface border border-outline-variant h-80 flex flex-col relative overflow-hidden shrink-0">
+                        <div class="absolute top-3 left-4 z-20 flex items-center gap-2">
                             <span class="material-symbols-outlined text-[16px] text-primary-container">my_location</span>
                             <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase" id="ui-loc">Tracking Node...</span>
                         </div>
+                        <div class="absolute top-3 right-4 z-20 text-[9px] font-mono text-outline-variant tracking-widest" id="ui-radar-count"></div>
+
                         <div class="flex-1 bg-[#090e16] relative flex items-center justify-center">
                             <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MCcgaGVpZ2h0PSc0MCc+PHBhdGggZD0nTSA0MCAwIEwgMCAwIDAgNDAnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzI1MkQzQScgc3Ryb2tlLXdpZHRoPScxJy8+PC9zdmc+')]"></div>
                             <div class="absolute w-24 h-24 rounded-full border border-primary-container/30"></div>
                             <div class="absolute w-48 h-48 rounded-full border border-primary-container/20"></div>
-                            <div class="absolute w-72 h-72 rounded-full overflow-hidden"><div class="radar-sweep"></div></div>
-                            <div class="absolute top-1/3 right-1/3 w-2 h-2 bg-error rounded-full animate-ping" id="ui-blip-1"></div>
-                            <div class="absolute top-1/3 right-1/3 w-2 h-2 bg-error rounded-full" id="ui-blip-2"></div>
+                            <div class="absolute w-64 h-64 rounded-full border border-primary-container/10"></div>
+                            <div class="absolute w-64 h-64 rounded-full overflow-hidden"><div class="radar-sweep"></div></div>
+
+                            <!-- target khud, center par -->
+                            <div class="absolute z-10 flex flex-col items-center pointer-events-none">
+                                <span class="material-symbols-outlined text-primary-container text-[18px]">gps_fixed</span>
+                            </div>
+
+                            <!-- asli associates yahan inject hote hain -->
+                            <div class="absolute inset-0 z-10" id="ui-radar-blips"></div>
                         </div>
+
+                        <div class="bg-surface-container-low border-t border-outline-variant px-3 py-1.5 flex items-center gap-3 shrink-0 text-[9px] font-mono" id="ui-radar-legend"></div>
+                    </div>
+
+                    <!-- UNDER SURVEILLANCE: naam + exactly kis evidence par link hai -->
+                    <div class="bg-surface border border-outline-variant flex flex-col h-[260px] shrink-0">
+                        <div class="bg-surface-container px-4 py-2 border-b border-outline-variant flex items-center justify-between gap-2 shrink-0">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[16px] text-error">visibility</span>
+                                <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Under Surveillance</span>
+                            </div>
+                            <span class="text-[10px] font-mono text-outline-variant" id="ui-watch-count">--</span>
+                        </div>
+                        <div class="flex-1 overflow-y-auto divide-y divide-outline-variant/20" id="ui-watchlist"></div>
                     </div>
 
                     <!-- Financials -->
@@ -173,6 +199,19 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ===== ACTIVITY TIMELINE ===== -->
+            <div class="bg-surface border border-outline-variant mt-6 flex flex-col">
+                <div class="bg-surface-container px-4 py-2 border-b border-outline-variant flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px] text-primary-container">timeline</span>
+                        <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Activity Timeline</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-outline-variant" id="ui-timeline-meta"></span>
+                </div>
+                <div id="ui-timeline"></div>
+                <div class="px-3 pb-2 text-[9px] font-mono text-outline-variant" id="ui-timeline-peaks"></div>
+            </div>
         </div>
     </div>
 </main>
@@ -181,40 +220,85 @@
     let globalTargets = [];
 
     async function initProfiles() {
+        const listDiv = document.getElementById('target-list');
         try {
-            const res = await fetch('/api/graph-data');
-            const data = await res.json();
-            
-            const listDiv = document.getElementById('target-list');
+            // /api/dossiers = graph ke HAR entity ka asli record (phones, accounts,
+            // score, FIRs). Isliye ab kisi ka number "generate" karne ki zaroorat nahi.
+            const [gRes, tRes] = await Promise.all([fetch('/api/graph-data'), fetch('/api/dossiers')]);
+            const data  = await gRes.json();
+            const tData = await tRes.json();
+
             listDiv.innerHTML = '';
-            
-            if(data.status === 'success' && data.predictions) {
-                let allNames = new Set();
-                data.predictions.forEach(p => {
-                    if (p.source) allNames.add(p.source);
-                    if (p.target) allNames.add(p.target);
+
+            // Authoritative case records (real risk scores / badges), keyed by name
+            const caseFiles = {};
+            if (tData.status === 'success' && Array.isArray(tData.targets)) {
+                tData.targets.forEach(t => { caseFiles[t.name.trim().toLowerCase()] = t; });
+            }
+
+            if (data.status === 'success' && Array.isArray(tData.targets)) {
+                // AI ne jin logon ko flag kiya hai -- roster mein unhe upar dikhate hain
+                const predicted = new Set();
+                (data.predictions || []).forEach(p => {
+                    if (p.source) predicted.add(p.source.trim().toLowerCase());
+                    if (p.target) predicted.add(p.target.trim().toLowerCase());
                 });
-                
-                let uniqueNames = Array.from(allNames);
-                globalTargets = uniqueNames.map((name, index) => {
-                    let isBoss = name === "Rachit Walla" || name === "Advaith Yadav" || name === "Timothy Dutt" || name === "Lakshit Luthra" || name === "Ishaan Patel";
-                    return {
-                        id: `Kraken-00${index+1}`,
-                        name: name,
-                        score: isBoss ? 98 : (80 + Math.floor(Math.random() * 15)),
-                        color: isBoss ? "error" : "secondary-container",
-                        badge: isBoss ? "MASTERMIND" : "ASSOCIATE",
-                        phones: ["+91" + Math.floor(1000000000 + Math.random() * 9000000000)],
-                        accounts: ["AC-" + Math.floor(100000 + Math.random() * 900000)]
-                    };
-                });
-                
+
+                // Roster seedha live DB se: har record ke phone/account asli hain
+                let roster = tData.targets.map(rec => ({
+                    id: rec.id,
+                    name: rec.name,
+                    score: rec.score,
+                    color: rec.color,
+                    badge: rec.badge,
+                    onCase: (rec.firs || []).length > 0,
+                    flagged: rec.score >= 90,
+                    aiLinked: predicted.has(String(rec.name).trim().toLowerCase()),
+                    associates: rec.associates || 0,
+                    firs: rec.firs || [],
+                    towers: rec.towers || [],
+                    calls: rec.calls || 0,
+                    phones:   (rec.phones   && rec.phones.length)   ? rec.phones   : [],
+                    accounts: (rec.accounts && rec.accounts.length) ? rec.accounts : []
+                }));
+
+                roster.sort((a, b) => (b.aiLinked - a.aiLinked) || (b.score - a.score));
+
+                // Narrow the roster to match whichever dashboard card was clicked
+                const params = new URLSearchParams(window.location.search);
+                const filter = (params.get('filter') || '').trim().toLowerCase();
+                let title = 'ACTIVE TARGETS (LIVE DB)';
+                let emptyMsg = 'NO DATA FOUND.';
+
+                if (filter === 'flags') {
+                    roster = roster.filter(t => t.flagged);
+                    title = 'ACTIVE FLAGS &middot; RIS &ge; 90';
+                    emptyMsg = 'NO ACTIVE FLAGS IN DATABASE.';
+                } else if (filter === 'cases') {
+                    roster = roster.filter(t => t.onCase);
+                    title = 'OPEN CASES &middot; ACCUSED';
+                    emptyMsg = 'NO OPEN CASES IN DATABASE.';
+                }
+
+                const titleEl = document.getElementById('roster-title');
+                if (titleEl) titleEl.innerHTML = `${title} <span class="text-outline-variant">(${roster.length})</span>`;
+                const clearEl = document.getElementById('roster-clear');
+                if (clearEl && filter) { clearEl.classList.remove('hidden'); clearEl.classList.add('flex'); }
+
+                globalTargets = roster;
                 globalTargets.sort((a, b) => b.score - a.score);
+
+                if (globalTargets.length === 0) {
+                    document.getElementById('dossier-view').style.display = 'none';
+                    listDiv.innerHTML = `<div class="p-6 text-center text-outline-variant font-mono text-[11px] leading-relaxed">${emptyMsg}</div>`;
+                    return;
+                }
+
                 document.getElementById('dossier-view').style.display = 'block';
-                
+
                 globalTargets.forEach((t, index) => {
                     const bgColor = `bg-${t.color}-container/20`;
-                    const btnHTML = `
+                    listDiv.innerHTML += `
                         <div class="p-4 border-b border-outline-variant/30 cursor-pointer transition-colors target-btn border-l-2 border-l-transparent hover:bg-surface-container" 
                              onclick="loadProfileData(${index}, this)">
                             <div class="flex justify-between items-start mb-1">
@@ -223,11 +307,33 @@
                             </div>
                             <div class="text-[10px] font-mono text-outline-variant">ID: ${t.id}</div>
                         </div>`;
-                    listDiv.innerHTML += btnHTML;
                 });
-                
-                if (listDiv.firstElementChild) {
-                    loadProfileData(0, listDiv.firstElementChild);
+
+                // Open the entity named in ?target= (network panel / dashboard VIEW button),
+                // else the first. Agar naam roster mein nahi mila to chup-chaap galat
+                // aadmi mat kholo -- saaf saaf batao.
+                const wanted = params.get('target');
+                let startIndex = 0;
+                if (wanted) {
+                    const needle = wanted.trim().toLowerCase();
+                    let hit = globalTargets.findIndex(t => String(t.name).trim().toLowerCase() === needle);
+                    if (hit === -1) {
+                        // thoda lenient: extra spaces / partial match
+                        hit = globalTargets.findIndex(t => String(t.name).trim().toLowerCase().replace(/\s+/g, ' ') === needle.replace(/\s+/g, ' '));
+                    }
+                    if (hit !== -1) {
+                        startIndex = hit;
+                    } else {
+                        const titleEl2 = document.getElementById('roster-title');
+                        if (titleEl2) {
+                            titleEl2.innerHTML = `${titleEl2.innerHTML} <span class="text-error">&middot; "${wanted}" NOT ON ROSTER</span>`;
+                        }
+                    }
+                }
+                const startEl = listDiv.children[startIndex];
+                if (startEl) {
+                    loadProfileData(startIndex, startEl);
+                    startEl.scrollIntoView({ block: 'nearest' });
                 }
 
             } else {
@@ -263,57 +369,287 @@
         document.getElementById('ui-ring').className = `text-${t.color}`;
         document.getElementById('ui-ring').setAttribute("stroke-dasharray", `${t.score}, 100`);
 
-        document.getElementById('ui-blip-1').className = `absolute top-[${Math.floor(Math.random()*40+20)}%] right-[${Math.floor(Math.random()*40+20)}%] w-2 h-2 bg-${t.color} rounded-full animate-ping`;
-        document.getElementById('ui-blip-2').className = document.getElementById('ui-blip-1').className.replace('animate-ping', '');
-
         document.getElementById('ui-cdr').innerHTML = `<tr><td colspan="3" class="p-3 text-center text-outline-variant animate-pulse">QUERYING LIVE DATABASE...</td></tr>`;
         document.getElementById('ui-trans').innerHTML = `<div class="p-3 text-center text-outline-variant animate-pulse">EXTRACTING LOGS...</div>`;
 
-        // Simulate fetching with a short delay for realistic UI effect
-        setTimeout(() => {
-            const towers = ["Cell-Tower-Delta (Noida)", "Sector-18 BTS (Delhi)", "Okhla Phase-2 Relay", "Gurgaon CyberHub Node", "Faridabad Sec-15 Tower"];
-            const selectedTower = towers[Math.floor(Math.random() * towers.length)];
-            
-            document.getElementById('ui-loc').innerText = `Last Ping: ${selectedTower}`;
+        // Asli record uthao -- /api/entity se (koi random data nahi)
+        try {
+            const res = await fetch(`/api/entity?name=${encodeURIComponent(t.name)}`);
+            const payload = await res.json();
+            if (payload.status !== 'success') throw new Error(payload.message || 'lookup failed');
+            const ent = payload.entity;
 
-            // Generate CDR Data
-            let cdrHtml = '';
-            for(let i=0; i<4; i++) {
-                let rec = "+91" + Math.floor(1000000000 + Math.random() * 9000000000);
-                let loc = towers[Math.floor(Math.random() * towers.length)];
-                let dur = Math.floor(Math.random() * 25 + 2); 
-                let freq = Math.floor(Math.random() * 8 + 1); 
-                
-                cdrHtml += `<tr class="hover:bg-surface-container transition-colors border-b border-outline-variant/30">
-                    <td class="p-3 text-secondary-fixed font-bold">${t.phones[0]}</td>
-                    <td class="p-3 text-white">${rec}<br><span class="text-[9px] text-outline-variant">${freq} CALLS LOGGED</span></td>
-                    <td class="p-3 text-${t.color}">${loc}<br><span class="text-[9px] text-outline-variant">TOTAL DUR: ${dur} MINS</span></td>
-                </tr>`;
-            }
-            document.getElementById('ui-cdr').innerHTML = cdrHtml;
+            document.getElementById('ui-loc').innerText = ent.top_tower
+                ? `Last Ping: ${ent.top_tower} (${ent.tower_hits[ent.top_tower]} pings)`
+                : 'No tower ping on record';
 
-            // Generate Txn Data
-            let txnHtml = '';
-            for(let i=0; i<3; i++) {
-                let amt = Math.floor(Math.random() * 800000 + 50000);
-                let date = `2026-08-${Math.floor(Math.random() * 28 + 1).toString().padStart(2, '0')}`;
-                let recvAcct = "AC-" + Math.floor(100000 + Math.random() * 900000);
-                
-                txnHtml += `<div class="flex items-center justify-between border-b border-outline-variant/30 pb-3 mb-2">
-                    <div>
-                        <div class="text-[12px] font-mono text-primary font-bold">DATE: ${date}</div>
-                        <div class="text-[10px] font-mono text-outline-variant truncate w-48">Sender: ${t.accounts[0]} | Recv: ${recvAcct}</div>
+            // Radar aur watchlist -- dono asli associates se bharte hain
+            renderRadar(ent);
+            renderWatchlist(ent);
+            renderTimeline(t.name);
+
+            // ---- CDR: asli calls, asli counterparty, asli tower ----
+            const calls = ent.calls || [];
+            document.getElementById('ui-cdr').innerHTML = calls.length === 0
+                ? `<tr><td colspan="3" class="p-3 text-center text-outline-variant">NO CDR RECORDS ON FILE</td></tr>`
+                : calls.map(c => {
+                    const mins = Math.max(1, Math.round(c.duration_sec / 60));
+                    const who = c.identified
+                        ? `${c.counterparty}<br><span class="text-[9px] text-outline-variant">${c.counterparty_phone}</span>`
+                        : `${c.counterparty_phone}<br><span class="text-[9px] text-outline-variant">UNIDENTIFIED SUBSCRIBER</span>`;
+                    return `<tr class="hover:bg-surface-container transition-colors border-b border-outline-variant/30">
+                        <td class="p-3 text-secondary-fixed font-bold">${c.own_phone}<br><span class="text-[9px] text-outline-variant">${c.direction === 'out' ? 'OUTGOING' : 'INCOMING'}</span></td>
+                        <td class="p-3 text-white">${who}</td>
+                        <td class="p-3 text-${t.color}">${c.tower || '--'}<br><span class="text-[9px] text-outline-variant">${c.timestamp} &middot; ${mins} MIN</span></td>
+                    </tr>`;
+                }).join('');
+
+            // ---- Transactions: asli amount, date, counterparty ----
+            const txns = ent.transactions || [];
+            document.getElementById('ui-trans').innerHTML = txns.length === 0
+                ? `<div class="p-3 text-center text-outline-variant">NO FINANCIAL TRAIL ON FILE</div>`
+                : txns.map(x => {
+                    const out = x.direction === 'out';
+                    return `<div class="flex items-center justify-between border-b border-outline-variant/30 pb-3 mb-2">
+                        <div>
+                            <div class="text-[12px] font-mono text-primary font-bold">DATE: ${x.date}</div>
+                            <div class="text-[10px] font-mono text-outline-variant truncate w-48">${out ? 'Sent to' : 'Received from'}: ${x.counterparty} | ${x.counterparty_account}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[12px] font-mono ${out ? 'text-error' : 'text-primary-container'} font-bold">${out ? '-' : '+'}\u20b9${Number(x.amount).toLocaleString('en-IN')}</div>
+                            <div class="text-[9px] font-mono text-outline-variant">${out ? 'DEBIT' : 'CREDIT'} &middot; ${x.own_account}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+        } catch (err) {
+            console.error('Entity lookup failed:', err);
+            document.getElementById('ui-loc').innerText = 'Tracking unavailable';
+            document.getElementById('ui-radar-blips').innerHTML = '';
+            document.getElementById('ui-watchlist').innerHTML = '<div class="p-4 text-[11px] font-mono text-error text-center">ASSOCIATE LOOKUP FAILED</div>';
+            document.getElementById('ui-cdr').innerHTML = `<tr><td colspan="3" class="p-3 text-center text-error">CDR FETCH FAILED</td></tr>`;
+            document.getElementById('ui-trans').innerHTML = `<div class="p-3 text-center text-error">TRANSACTION FETCH FAILED</div>`;
+        }
+    }
+
+
+    // ==========================================================
+    // ASSOCIATION RADAR + WATCHLIST
+    // Har blip ek asli associate hai (koi random dot nahi):
+    //   distance  = link strength (jitna strong, utna center ke paas)
+    //   sector    = evidence type (FIR / CDR / MONEY / INTEL)
+    //   label     = us aadmi ka naam
+    //   tooltip   = exactly kis cheez par link hai
+    // ==========================================================
+    const EVIDENCE = {
+        co_accused: { label: 'FIR',   color: 'error',               angle: 225 },
+        money:      { label: 'MONEY', color: 'secondary-container',  angle: 45  },
+        call:       { label: 'CDR',   color: 'primary-container',    angle: 315 },
+        intake:     { label: 'INTEL', color: 'tertiary-fixed-dim',   angle: 135 }
+    };
+    const EVIDENCE_ORDER = ['co_accused', 'money', 'call', 'intake'];
+    const RADAR_LIMIT = 12;
+    const SECTOR_SPAN = 74;      // degrees
+    const R_NEAR = 46, R_FAR = 118;
+
+    function dominantKind(kinds) {
+        return EVIDENCE_ORDER.find(k => (kinds || []).includes(k)) || 'call';
+    }
+
+    function renderRadar(ent) {
+        const blipLayer = document.getElementById('ui-radar-blips');
+        const legend = document.getElementById('ui-radar-legend');
+        const countEl = document.getElementById('ui-radar-count');
+        const all = ent.associates || [];
+
+        if (all.length === 0) {
+            blipLayer.innerHTML = `<div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-[10px] font-mono text-outline-variant mt-16">NO CONFIRMED ASSOCIATES</span></div>`;
+            legend.innerHTML = '';
+            countEl.innerText = '';
+            return;
+        }
+
+        const shown = all.slice(0, RADAR_LIMIT);
+        countEl.innerText = `${shown.length} OF ${all.length} ASSOCIATES`;
+
+        // Sector ke hisaab se group -> ek hi evidence type wale ek arc mein
+        const buckets = {};
+        shown.forEach(a => {
+            const kind = dominantKind(a.kinds);
+            (buckets[kind] = buckets[kind] || []).push(a);
+        });
+
+        const maxWeight = Math.max(...shown.map(a => a.weight)) || 1;
+        const minWeight = Math.min(...shown.map(a => a.weight));
+        const span = Math.max(1, maxWeight - minWeight);
+        let html = '';
+
+        EVIDENCE_ORDER.forEach(kind => {
+            const members = buckets[kind] || [];
+            const meta = EVIDENCE[kind];
+            members.forEach((a, i) => {
+                // sector ke andar evenly spread
+                const offset = members.length === 1
+                    ? 0
+                    : (i / (members.length - 1) - 0.5) * SECTOR_SPAN;
+                const rad = (meta.angle + offset) * Math.PI / 180;
+                // strong link = center ke paas
+                const norm = (a.weight - minWeight) / span;
+                const radius = R_FAR - norm * (R_FAR - R_NEAR);
+                const x = Math.round(Math.cos(rad) * radius);
+                const y = Math.round(Math.sin(rad) * radius);
+                const strong = a.weight >= maxWeight;
+                const tip = `${a.name} — ${a.reason}`.replace(/"/g, '&quot;');
+
+                html += `
+                    <div class="absolute flex flex-col items-center cursor-pointer group"
+                         style="left: calc(50% + ${x}px); top: calc(50% + ${y}px); transform: translate(-50%, -50%);"
+                         title="${tip}" onclick="focusTarget('${a.name.replace(/'/g, "\\'")}')">
+                        <div class="relative flex items-center justify-center">
+                            ${strong ? `<span class="absolute w-3 h-3 rounded-full bg-${meta.color} opacity-60 animate-ping"></span>` : ''}
+                            <span class="w-2 h-2 rounded-full bg-${meta.color} shadow-[0_0_6px_currentColor] text-${meta.color}"></span>
+                        </div>
+                        <span class="mt-1 text-[8px] font-mono text-on-surface-variant group-hover:text-${meta.color} whitespace-nowrap max-w-[92px] truncate">${a.name}</span>
+                    </div>`;
+            });
+        });
+
+        blipLayer.innerHTML = html;
+
+        legend.innerHTML = EVIDENCE_ORDER
+            .filter(kind => (buckets[kind] || []).length)
+            .map(kind => `<span class="flex items-center gap-1 text-outline-variant">
+                    <span class="w-1.5 h-1.5 rounded-full bg-${EVIDENCE[kind].color}"></span>
+                    ${EVIDENCE[kind].label} ${(buckets[kind] || []).length}
+                 </span>`).join('')
+            + `<span class="ml-auto text-outline-variant">INNER RING = STRONGER LINK</span>`;
+    }
+
+    function renderWatchlist(ent) {
+        const list = document.getElementById('ui-watchlist');
+        const counter = document.getElementById('ui-watch-count');
+        const all = ent.associates || [];
+        counter.innerText = `${all.length} linked ${all.length === 1 ? 'entity' : 'entities'}`;
+
+        if (all.length === 0) {
+            list.innerHTML = `<div class="p-4 text-[11px] font-mono text-outline-variant text-center">NO CONFIRMED ASSOCIATES ON RECORD</div>`;
+            return;
+        }
+
+        list.innerHTML = all.map(a => {
+            const chips = (a.kinds || []).map(k => {
+                const meta = EVIDENCE[k] || { label: k.toUpperCase(), color: 'outline' };
+                return `<span class="text-[8px] font-mono text-${meta.color} border border-${meta.color}/40 px-1">${meta.label}</span>`;
+            }).join(' ');
+            const towers = (a.call_towers || []).slice(0, 2).join(', ');
+            return `
+                <div class="px-3 py-2 hover:bg-surface-container transition-colors cursor-pointer"
+                     onclick="focusTarget('${a.name.replace(/'/g, "\\'")}')">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-mono text-white truncate">${a.name}</span>
+                        <span class="flex items-center gap-1 shrink-0">${chips}
+                            <span class="text-[8px] font-mono text-outline-variant ml-1">w${a.weight}</span>
+                        </span>
                     </div>
-                    <div class="text-right">
-                        <div class="text-[12px] font-mono text-${t.color} font-bold">₹${amt.toLocaleString('en-IN')}</div>
-                    </div>
+                    <div class="text-[9px] font-mono text-on-surface-variant mt-0.5">${a.reason}</div>
+                    ${towers ? `<div class="text-[8px] font-mono text-outline-variant">Common towers: ${towers}</div>` : ''}
                 </div>`;
-            }
-            document.getElementById('ui-trans').innerHTML = txnHtml;
+        }).join('');
+    }
 
-        }, 600);
+    // Radar / watchlist se kisi naam par click -> uska dossier khul jaye
+    window.focusTarget = function(name) {
+        const idx = globalTargets.findIndex(t =>
+            String(t.name).trim().toLowerCase() === String(name).trim().toLowerCase());
+        if (idx < 0) return;
+        const el = document.querySelectorAll('.target-btn')[idx];
+        if (el) {
+            loadProfileData(idx, el);
+            el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    };
+
+
+    // ==========================================================
+    // ACTIVITY TIMELINE -- month-wise calls vs money.
+    // Dataset mein timestamps hamesha the, kahin dikhte nahi the.
+    // ==========================================================
+    async function renderTimeline(name) {
+        const wrap = document.getElementById('ui-timeline');
+        const meta = document.getElementById('ui-timeline-meta');
+        const peaks = document.getElementById('ui-timeline-peaks');
+        if (!wrap) return;
+
+        wrap.innerHTML = '<div class="text-[10px] font-mono text-outline-variant p-4 animate-pulse">Building activity timeline...</div>';
+        if (meta) meta.innerText = '';
+        if (peaks) peaks.innerHTML = '';
+
+        try {
+            const res = await fetch('/api/timeline?name=' + encodeURIComponent(name));
+            const data = await res.json();
+            if (data.status !== 'success') throw new Error(data.message);
+
+            const points = data.points || [];
+            if (!points.length) {
+                wrap.innerHTML = '<div class="text-[10px] font-mono text-outline-variant p-4">No dated activity on record.</div>';
+                return;
+            }
+
+            const t = data.totals || {};
+            if (meta) {
+                meta.innerText = `${t.calls} calls (${t.call_minutes} min) · ${t.transfers} transfers · ` +
+                    '₹' + Number(t.volume || 0).toLocaleString('en-IN') + ` · ${t.span}`;
+            }
+
+            const maxCalls = Math.max(1, ...points.map(p => p.calls));
+            const maxVol = Math.max(1, ...points.map(p => p.volume));
+            const H = 96;
+
+            // Har month ka do-part bar: calls (cyan) aur money (amber)
+            wrap.innerHTML = `
+                <div class="flex items-end gap-1 px-3 pt-3" style="height:${H + 34}px">
+                    ${points.map(p => {
+                        const ch = Math.round((p.calls / maxCalls) * H);
+                        const mh = Math.round((p.volume / maxVol) * H);
+                        const tip = `${p.period} — ${p.calls} calls (${p.call_minutes} min), ` +
+                            `${p.transfers} transfers, ₹${Number(p.volume).toLocaleString('en-IN')}`;
+                        return `
+                            <div class="flex-1 flex flex-col items-center justify-end group cursor-default" title="${tip}">
+                                <div class="w-full flex items-end justify-center gap-[2px]" style="height:${H}px">
+                                    <div class="w-1/2 bg-primary-container/70 group-hover:bg-primary-container transition-colors"
+                                         style="height:${ch}px" ></div>
+                                    <div class="w-1/2 bg-secondary-container/70 group-hover:bg-secondary-container transition-colors"
+                                         style="height:${mh}px"></div>
+                                </div>
+                                <span class="text-[7px] font-mono text-outline-variant mt-1 whitespace-nowrap">${p.period.slice(2)}</span>
+                            </div>`;
+                    }).join('')}
+                </div>
+                <div class="flex items-center gap-4 px-3 pb-2 text-[9px] font-mono text-outline-variant">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 bg-primary-container/70"></span>CALLS</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 bg-secondary-container/70"></span>MONEY VOLUME</span>
+                </div>`;
+
+            if (peaks && data.peaks) {
+                const bits = [];
+                if (data.peaks.call_day) {
+                    bits.push(`Busiest day: <span class="text-white">${data.peaks.call_day.date}</span> (${data.peaks.call_day.calls} calls)`);
+                }
+                if (data.peaks.largest_transfer) {
+                    const lt = data.peaks.largest_transfer;
+                    bits.push(`Largest transfer: <span class="text-white">₹${Number(lt.amount).toLocaleString('en-IN')}</span> ` +
+                        `${lt.direction === 'out' ? 'to' : 'from'} ${lt.counterparty} on ${lt.date}`);
+                }
+                peaks.innerHTML = bits.join(' &middot; ');
+            }
+        } catch (e) {
+            console.error('Timeline failed:', e);
+            wrap.innerHTML = '<div class="text-[10px] font-mono text-error p-4">Timeline unavailable.</div>';
+        }
     }
 
     document.addEventListener("DOMContentLoaded", initProfiles);
 </script>
+<script src="/static/kraken_logout.js"></script>
+<script src="/static/kraken_header.js"></script>
 </body></html>

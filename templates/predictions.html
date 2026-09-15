@@ -65,7 +65,7 @@
             <button class="p-2 text-on-surface-variant hover:text-secondary-container transition-colors"><span class="material-symbols-outlined text-[20px]">settings</span></button>
         </div>
         <div class="w-px h-6 bg-outline-variant mx-2"></div>
-        <a href="/"><button class="text-[12px] font-mono text-secondary-container border border-secondary-container/50 px-3 py-1 hover:bg-secondary-container hover:text-[#412d00] transition-colors">SECURE LOGOUT</button></a>
+        <button class="text-[12px] font-mono text-secondary-container border border-secondary-container/50 px-3 py-1 hover:bg-secondary-container hover:text-[#412d00] transition-colors" type="button" onclick="return krakenLogout(event);" title="Terminate session and return to secure access">SECURE LOGOUT</button>
     </div>
 </header>
 
@@ -150,7 +150,9 @@
             const countDisplay = document.getElementById('threat-count');
             
             if (data.status === "success" && data.predictions) {
-                const preds = data.predictions;
+                // Header settings ka minimum confidence filter
+                const minConf = (window.krakenSettings ? window.krakenSettings().minConfidence : 0) || 0;
+                const preds = data.predictions.filter(p => Number(p.confidence) >= minConf);
                 countDisplay.innerText = preds.length;
                 
                 if (preds.length === 0) {
@@ -226,4 +228,6 @@
 
     document.addEventListener("DOMContentLoaded", loadPredictions);
 </script>
+<script src="/static/kraken_logout.js"></script>
+<script src="/static/kraken_header.js"></script>
 </body></html>

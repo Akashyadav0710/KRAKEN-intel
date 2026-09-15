@@ -1,3 +1,13 @@
+# Kraken web application - runtime dependencies.
+# The dashboard reads the committed dataset in sample_data/, so this is all
+# that is needed to run it:
+#
+#   python -m venv venv
+#   ./venv/bin/pip install -r requirements.txt
+#   ./venv/bin/python app.py
+#
+# The graph engine (kraken_data.py) is pure standard library - community
+# detection, link prediction and path finding need no extra packages.
+
 Flask
 gunicorn
-pandas

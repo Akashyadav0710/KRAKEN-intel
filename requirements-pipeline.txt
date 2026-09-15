@@ -1,0 +1,20 @@
+# Kraken data pipeline - OPTIONAL, one-time tooling only.
+#
+# The web application does NOT need these. Their output is already committed
+# to sample_data/extracted_entities.json, so the dashboard runs without them.
+# Install these only to regenerate the dataset from raw sources.
+#
+#   ./venv/bin/pip install -r requirements-pipeline.txt
+#   ./venv/bin/python -m spacy download en_core_web_sm
+#
+# Which script needs what:
+#   ner_extractor.py        spacy  (+ the en_core_web_sm model)
+#   predict_hidden_links.py networkx
+#   generate_fake_data.py   faker
+#   graph_loader.py         neo4j  (also needs a running Neo4j server;
+#                                  set NEO4J_PASSWORD in the environment)
+
+spacy
+networkx
+faker
+neo4j

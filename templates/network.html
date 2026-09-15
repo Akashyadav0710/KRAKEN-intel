@@ -22,18 +22,38 @@
         .highlight-link-teal { stroke: #00f0ff !important; stroke-width: 3px !important; opacity: 1 !important; filter: drop-shadow(0 0 8px rgba(0,240,255,0.8)); }
         .highlight-link-amber { stroke: #feb700 !important; stroke-width: 3px !important; opacity: 1 !important; filter: drop-shadow(0 0 8px rgba(254,183,0,0.8)); }
 
-        .node circle, .node path, .node rect { fill: #1b2028; stroke-width: 1.5px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .node circle, .node path, .node rect, .node polygon { fill: #1b2028; stroke-width: 1.5px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .node text { fill: #dee2ee; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; pointer-events: none; text-shadow: 2px 2px 4px #000; }
+        .node.phone text, .node.bank text { font-size: 10px; fill: #96a1b0; }
         
         .node.person circle { stroke: #00dbe9; }
         .node.phone path { stroke: #ffdea8; }
         .node.bank rect { stroke: #ffb4ab; }
+        .node.location polygon { stroke: #c0a7ff; }
 
-        .node:hover circle, .node.active circle { stroke: #00f0ff; stroke-width: 3px; r: 18; fill: #00363a; filter: drop-shadow(0 0 10px #00f0ff); }
+        .node:hover circle, .node.active circle { stroke: #00f0ff; stroke-width: 3px; transform: scale(1.3); fill: #00363a; filter: drop-shadow(0 0 10px #00f0ff); }
         .node:hover path, .node.active path { stroke: #feb700; stroke-width: 3px; transform: scale(1.3); fill: #412d00; filter: drop-shadow(0 0 10px #feb700); }
-        .node:hover rect, .node.active rect { stroke: #ffb4ab; stroke-width: 3px; transform: scale(1.3) translate(2px, 2px); fill: #690005; filter: drop-shadow(0 0 10px #ffb4ab); }
+        .node:hover rect, .node.active rect { stroke: #ffb4ab; stroke-width: 3px; transform: scale(1.3); fill: #690005; filter: drop-shadow(0 0 10px #ffb4ab); }
+        .node:hover polygon, .node.active polygon { stroke: #d6c6ff; stroke-width: 3px; transform: scale(1.3); fill: #2b1f4d; filter: drop-shadow(0 0 10px #c0a7ff); }
         .node:hover text, .node.active text { fill: #fff; font-weight: 700; font-size: 14px; text-shadow: 0 0 8px #000; }
         
+        /* ---------- MAP KEY / LEGEND ---------- */
+        .legend-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 4px 5px; border: 1px solid transparent; background: none; cursor: pointer; text-align: left; transition: background .15s ease, border-color .15s ease, opacity .15s ease; }
+        .legend-item:hover { background: #30353e; border-color: #3b494b; }
+        .legend-item svg { flex-shrink: 0; overflow: visible; }
+        .legend-label { font-size: 10px; line-height: 1.3; color: #dee2ee; letter-spacing: .06em; text-transform: uppercase; flex: 1; }
+        .legend-desc { font-size: 9px; line-height: 1.35; color: #8b96a5; letter-spacing: .02em; text-transform: none; display: block; margin-top: 1px; }
+        .legend-count { font-size: 9px; color: #3b494b; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+        .legend-item.off { opacity: .3; }
+        .legend-item.empty { opacity: .45; pointer-events: none; }
+        .legend-item.off .legend-label { text-decoration: line-through; }
+        .legend-section { font-size: 9px; color: #3b494b; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 4px; }
+        @keyframes legend-dash { to { stroke-dashoffset: -100; } }
+        .legend-dash-anim { animation: legend-dash 6s linear infinite; }
+        #legend-body { max-height: calc(100vh - 260px); overflow-y: auto; }
+        #graph-legend.collapsed #legend-body { display: none; }
+        #graph-legend.collapsed #legend-chevron { transform: rotate(180deg); }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f141b; }
         ::-webkit-scrollbar-thumb { background: #3b494b; border-radius: 4px; }
@@ -70,8 +90,8 @@
         </div>
     </div>
     <div class="flex items-center space-x-6 text-[11px] font-mono uppercase tracking-widest">
-        <div class="text-secondary-fixed border border-secondary-fixed/30 px-2 py-0.5 bg-secondary-fixed/5 hidden lg:block">CLEARANCE: OMEGA</div>
-        <a href="/"><button class="border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors text-primary-container">SECURE LOGOUT</button></a>
+        <div class="text-secondary-fixed border border-secondary-fixed/30 px-2 py-0.5 bg-secondary-fixed/5 hidden lg:block">CLEARANCE: OMEGA</div><div class="flex items-center gap-1"><button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">notifications</span></button><button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">settings</span></button></div>
+        <button class="border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors text-primary-container" type="button" onclick="return krakenLogout(event);" title="Terminate session and return to secure access">SECURE LOGOUT</button>
     </div>
 </nav>
 
@@ -84,7 +104,7 @@
                 <div class="text-[10px] font-mono text-outline-variant mt-0.5 uppercase tracking-widest">LIVE GRAPH ENGINE</div>
             </div>
         </div>
-        <button class="w-full bg-primary-container text-[#00363a] font-bold text-[11px] uppercase tracking-widest py-2 hover:bg-transparent hover:text-primary-container border border-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]">NEW CASE</button>
+        <button class="w-full bg-primary-container text-[#00363a] font-bold text-[11px] uppercase tracking-widest py-2 hover:bg-transparent hover:text-primary-container border border-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]" onclick="window.location.href='/intake'" title="Open the intake console to file new intelligence">NEW CASE</button>
     </div>
     <div class="flex-1 overflow-y-auto py-2">
         <nav class="flex flex-col space-y-1 text-[11px] font-mono uppercase tracking-widest font-bold">
@@ -101,11 +121,139 @@
 
 <main class="ml-64 mt-16 flex-1 relative overflow-hidden bg-grid flex bg-background pointer-events-auto pb-16">
     <div class="flex-1 h-full relative" id="graph-container">
+        <div id="graph-empty" class="absolute inset-0 hidden flex-col items-center justify-center z-20 pointer-events-none text-center px-6">
+            <span class="material-symbols-outlined text-[48px] text-outline-variant mb-3">link_off</span>
+            <div class="text-[13px] font-mono tracking-widest text-on-surface-variant mb-1">NO CONFIRMED LINKS IN DATABASE</div>
+            <div class="text-[11px] font-mono text-outline-variant max-w-md leading-relaxed">0 relationships have been verified and confirmed. Every current relationship is AI-predicted and still awaiting confirmation.</div>
+            <a href="/predictions" class="mt-4 pointer-events-auto text-[10px] font-mono tracking-widest text-secondary-container border border-secondary-container/50 px-3 py-1.5 hover:bg-secondary-container/10 transition-colors">REVIEW AI PREDICTIONS</a>
+            <a href="/network" class="mt-2 pointer-events-auto text-[10px] font-mono tracking-widest text-outline-variant hover:text-primary-container transition-colors">SHOW FULL GRAPH</a>
+        </div>
         <div id="ai-alert-banner" class="absolute top-8 left-[50%] bg-surface-container-highest border border-secondary-container px-3 py-1 items-center space-x-2 z-10 opacity-90 transform -translate-x-1/2 hidden pointer-events-none">
             <span class="material-symbols-outlined text-secondary-container text-[16px] flicker">warning</span>
             <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-secondary-fixed">AI: HIDDEN CONNECTION DETECTED</span>
         </div>
-        <div class="absolute bottom-6 right-6 flex flex-col gap-2 z-20 pointer-events-auto">
+        <!-- ===== LIVE STATS HUD ===== -->
+        <div id="graph-hud" class="absolute top-4 left-4 z-20 pointer-events-none flex flex-wrap gap-2 text-[10px] font-mono uppercase tracking-widest">
+            <div class="bg-surface-container/90 border border-outline-variant px-2 py-1 backdrop-blur-sm">
+                <span class="text-outline-variant">ENTITIES</span>
+                <span id="hud-nodes" class="text-primary-container font-bold ml-1">0</span>
+            </div>
+            <div class="bg-surface-container/90 border border-outline-variant px-2 py-1 backdrop-blur-sm">
+                <span class="text-outline-variant">CONFIRMED</span>
+                <span id="hud-confirmed" class="text-primary-fixed-dim font-bold ml-1">0</span>
+            </div>
+            <div class="bg-surface-container/90 border border-outline-variant px-2 py-1 backdrop-blur-sm">
+                <span class="text-outline-variant">AI PREDICTED</span>
+                <span id="hud-predicted" class="text-secondary-container font-bold ml-1">0</span>
+            </div>
+        </div>
+
+        <!-- ===== MAP KEY / LEGEND ===== -->
+        <div id="graph-legend" class="absolute bottom-6 left-4 z-20 w-[268px] max-w-[calc(100%-2rem)] bg-surface-container/95 border border-outline-variant backdrop-blur-sm pointer-events-auto shadow-[0_0_20px_rgba(0,0,0,0.6)]">
+            <button id="legend-toggle" class="w-full flex items-center justify-between px-3 py-2 bg-[#171c24] border-b border-outline-variant hover:bg-surface-container-highest transition-colors">
+                <span class="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-primary-fixed">
+                    <span class="material-symbols-outlined text-[14px] text-primary-container">key</span>MAP KEY
+                </span>
+                <span id="legend-chevron" class="material-symbols-outlined text-[16px] text-outline-variant transition-transform">expand_more</span>
+            </button>
+
+            <div id="legend-body" class="p-3 space-y-3">
+
+                <!-- Entity shapes -->
+                <div>
+                    <div class="legend-section">ENTITY TYPES &middot; CLICK TO FILTER</div>
+                    <button class="legend-item" data-filter="person" title="Show / hide people">
+                        <svg width="20" height="20" viewBox="-11 -11 22 22"><circle r="8" fill="#1b2028" stroke="#00dbe9" stroke-width="1.5"></circle></svg>
+                        <span class="legend-label">Circle &mdash; Person
+                            <span class="legend-desc">Named individual (suspect, associate)</span>
+                        </span>
+                        <span class="legend-count" data-count="person">0</span>
+                    </button>
+                    <button class="legend-item" data-filter="location" title="Show / hide locations">
+                        <svg width="20" height="20" viewBox="-11 -11 22 22"><polygon points="6.9,-4 0,-8 -6.9,-4 -6.9,4 0,8 6.9,4" fill="#1b2028" stroke="#c0a7ff" stroke-width="1.5"></polygon></svg>
+                        <span class="legend-label">Hexagon &mdash; Location
+                            <span class="legend-desc">Road, zila, area or premises</span>
+                        </span>
+                        <span class="legend-count" data-count="location">0</span>
+                    </button>
+                    <button class="legend-item" data-filter="phone" title="Show / hide phone numbers">
+                        <svg width="20" height="20" viewBox="-11 -11 22 22"><path d="M 0 -8 L 8 0 L 0 8 L -8 0 Z" fill="#1b2028" stroke="#ffdea8" stroke-width="1.5"></path></svg>
+                        <span class="legend-label">Diamond &mdash; Phone / SIM
+                            <span class="legend-desc">Mobile number seen in call records</span>
+                        </span>
+                        <span class="legend-count" data-count="phone">0</span>
+                    </button>
+                    <button class="legend-item" data-filter="bank" title="Show / hide bank accounts">
+                        <svg width="20" height="20" viewBox="-11 -11 22 22"><rect x="-7" y="-7" width="14" height="14" rx="3" fill="#1b2028" stroke="#ffb4ab" stroke-width="1.5"></rect></svg>
+                        <span class="legend-label">Square &mdash; Bank Account
+                            <span class="legend-desc">Account / wallet in the money trail</span>
+                        </span>
+                        <span class="legend-count" data-count="bank">0</span>
+                    </button>
+                </div>
+
+                <!-- Connection styles -->
+                <div class="border-t border-outline-variant pt-3">
+                    <div class="legend-section">CONNECTION TYPES &middot; CLICK TO FILTER</div>
+                    <button class="legend-item" data-filter="confirmed" title="Show / hide confirmed links">
+                        <svg width="20" height="20" viewBox="0 0 20 20"><line x1="1" y1="10" x2="19" y2="10" stroke="#00dbe9" stroke-width="2"></line></svg>
+                        <span class="legend-label">Solid line &mdash; Confirmed
+                            <span class="legend-desc">Verified link already on record</span>
+                        </span>
+                        <span class="legend-count" data-count="confirmed">0</span>
+                    </button>
+                    <button class="legend-item" data-filter="predicted" title="Show / hide AI-predicted links">
+                        <svg width="20" height="20" viewBox="0 0 20 20"><line class="legend-dash-anim" x1="1" y1="10" x2="19" y2="10" stroke="#feb700" stroke-width="2" stroke-dasharray="4 3"></line></svg>
+                        <span class="legend-label">Dashed line &mdash; AI Predicted
+                            <span class="legend-desc">Hidden link KRAKEN inferred &mdash; not yet verified</span>
+                        </span>
+                        <span class="legend-count" data-count="predicted">0</span>
+                    </button>
+                </div>
+
+                <!-- How to read it -->
+                <div class="border-t border-outline-variant pt-3 space-y-1.5">
+                    <div class="legend-section">HOW TO READ</div>
+                    <div class="flex items-center gap-2">
+                        <svg width="34" height="16" viewBox="0 0 34 16"><circle cx="6" cy="8" r="3.5" fill="#1b2028" stroke="#00dbe9" stroke-width="1.2"></circle><circle cx="24" cy="8" r="7" fill="#1b2028" stroke="#00dbe9" stroke-width="1.5"></circle></svg>
+                        <span class="text-[9px] text-[#8b96a5] leading-snug">Bigger node = more connections (higher centrality)</span>
+                    </div>
+                    <div class="text-[9px] text-[#8b96a5] leading-snug">
+                        <span class="text-primary-container">CLICK</span> pin + open dossier &middot;
+                        <span class="text-primary-container">HOVER</span> isolate &middot;
+                        <span class="text-primary-container">DRAG</span> reposition &middot;
+                        <span class="text-primary-container">SCROLL</span> zoom
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PATH FINDER ===== -->
+    <div class="absolute top-24 left-6 z-20 pointer-events-auto w-72 bg-surface/95 backdrop-blur border border-outline-variant shadow-[0_0_20px_rgba(0,0,0,0.6)]">
+        <div class="bg-surface-container px-3 py-2 border-b border-outline-variant flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px] text-primary-container">route</span>
+            <span class="text-[10px] font-mono tracking-widest text-on-surface uppercase">Connection Tracer</span>
+        </div>
+        <div class="p-3 space-y-2">
+            <div class="relative">
+                <input id="path-from" type="text" spellcheck="false" placeholder="FROM: name / SIM / account"
+                       class="w-full bg-surface-container-low border border-outline-variant text-[10px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
+                <div id="path-from-list" class="hidden absolute left-0 right-0 top-full z-30 bg-surface-container border border-outline-variant max-h-40 overflow-y-auto"></div>
+            </div>
+            <div class="relative">
+                <input id="path-to" type="text" spellcheck="false" placeholder="TO: name / SIM / account"
+                       class="w-full bg-surface-container-low border border-outline-variant text-[10px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
+                <div id="path-to-list" class="hidden absolute left-0 right-0 top-full z-30 bg-surface-container border border-outline-variant max-h-40 overflow-y-auto"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <button id="btn-trace" class="col-span-2 bg-primary-container text-[#00363a] text-[10px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors">TRACE PATH</button>
+                <button id="btn-path-clear" class="text-[10px] font-mono text-outline-variant border border-outline-variant py-2 hover:border-primary-container hover:text-primary-container transition-colors">CLEAR</button>
+            </div>
+            <div id="path-result" class="max-h-56 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <div class="absolute bottom-6 right-6 flex flex-col gap-2 z-20 pointer-events-auto">
             <button id="btn-zoom-in" class="bg-surface-container-highest border border-outline-variant text-on-surface hover:text-primary-container p-2 shadow-[0_0_10px_rgba(0,0,0,0.5)]"><span class="material-symbols-outlined text-[20px]">add</span></button>
             <button id="btn-zoom-reset" class="bg-surface-container-highest border border-outline-variant text-on-surface hover:text-primary-container p-2 shadow-[0_0_10px_rgba(0,0,0,0.5)]"><span class="material-symbols-outlined text-[18px]">center_focus_strong</span></button>
             <button id="btn-zoom-out" class="bg-surface-container-highest border border-outline-variant text-on-surface hover:text-primary-container p-2 shadow-[0_0_10px_rgba(0,0,0,0.5)]"><span class="material-symbols-outlined text-[20px]">remove</span></button>
@@ -143,28 +291,77 @@
             </div>
         </div>
         <div class="p-4 border-t border-outline-variant bg-[#171c24]">
-            <a href="/profile"><button class="w-full border border-primary-container text-primary-container hover:bg-primary-container hover:text-[#00363a] transition-colors py-2 text-[11px] font-mono font-bold uppercase tracking-widest">OPEN FULL PROFILE</button></a>
+            <a href="/profile" id="dossier-profile-link"><button class="w-full border border-primary-container text-primary-container hover:bg-primary-container hover:text-[#00363a] transition-colors py-2 text-[11px] font-mono font-bold uppercase tracking-widest" id="dossier-profile-btn">OPEN FULL PROFILE</button></a>
         </div>
     </div>
 </main>
 
 <script>
-    const width = window.innerWidth - 256; 
-    const height = window.innerHeight - 64; 
+    const graphEl = document.getElementById("graph-container");
+    const width  = graphEl.clientWidth  || (window.innerWidth - 256);
+    const height = graphEl.clientHeight || (window.innerHeight - 64);
 
     const baseSvg = d3.select("#graph-container").append("svg").attr("width", "100%").attr("height", "100%");
     baseSvg.append("rect").attr("width", "100%").attr("height", "100%").style("fill", "none").style("pointer-events", "all").on("click", resetHighlight); 
 
     const container = baseSvg.append("g");
-    const zoom = d3.zoom().scaleExtent([0.1, 4]).on("zoom", (event) => container.attr("transform", event.transform));
+    let userZoomed = false;
+    const zoom = d3.zoom().scaleExtent([0.1, 4]).on("zoom", (event) => {
+        container.attr("transform", event.transform);
+        // event.sourceEvent is null for programmatic transitions - only real gestures count
+        if(event.sourceEvent) userZoomed = true;
+    });
     baseSvg.call(zoom);
 
     d3.select("#btn-zoom-in").on("click", () => baseSvg.transition().duration(300).call(zoom.scaleBy, 1.3));
     d3.select("#btn-zoom-out").on("click", () => baseSvg.transition().duration(300).call(zoom.scaleBy, 0.7));
-    d3.select("#btn-zoom-reset").on("click", () => baseSvg.transition().duration(500).call(zoom.transform, d3.zoomIdentity));
+    let fitToView = null;
+    d3.select("#btn-zoom-reset").on("click", () => {
+        userZoomed = false;
+        if(fitToView) fitToView(500);
+        else baseSvg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+    });
 
     let pinnedNode = null;
     let linkedByIndex = {};
+
+    // ---- MAP KEY filter state: every entity + connection type starts visible ----
+    const filterState = { person: true, location: true, phone: true, bank: true, confirmed: true, predicted: true };
+    let nodeSel = null, linkSel = null;
+
+    function applyFilters() {
+        if(!nodeSel || !linkSel) return;
+        nodeSel.style("display", d => filterState[d.type] === false ? "none" : null);
+        linkSel.style("display", d =>
+            (filterState[d.type] === false ||
+             filterState[d.source.type] === false ||
+             filterState[d.target.type] === false) ? "none" : null);
+    }
+
+    function setFilter(key, on) {
+        if(!(key in filterState)) return;
+        filterState[key] = on;
+        const btn = document.querySelector(`#legend-body .legend-item[data-filter="${key}"]`);
+        if(btn) btn.classList.toggle('off', !on);
+    }
+
+    document.querySelectorAll('#legend-body .legend-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const key = btn.dataset.filter;
+            setFilter(key, !filterState[key]);
+            applyFilters();
+            if(fitToView && !userZoomed) fitToView(600);   // re-frame what is left
+        });
+    });
+
+    // Deep link a pre-filtered view, e.g. /network?hide=phone,bank
+    (new URLSearchParams(window.location.search).get('hide') || '')
+        .split(',').map(v => v.trim().toLowerCase()).filter(Boolean)
+        .forEach(key => setFilter(key, false));
+
+    document.getElementById('legend-toggle').addEventListener('click', () => {
+        document.getElementById('graph-legend').classList.toggle('collapsed');
+    });
 
     function resetHighlight() {
         pinnedNode = null;
@@ -177,48 +374,113 @@
 
     function isConnected(a, b) { return linkedByIndex[`${a.id},${b.id}`] || linkedByIndex[`${b.id},${a.id}`] || a.id === b.id; }
     
+    const KNOWN_TYPES = ["person", "location", "phone", "bank"];
+    const DOSSIERS = {};          // name -> asli dossier (score, badge, FIRs, phones)
+    const EDGE_META = {};         // edge key -> confirmed edge ka asli evidence
+    const EDGE_KEY_SEP = String.fromCharCode(0);
+
+    // Classify an entity by its id. Word-boundary matched on purpose: the old
+    // substring test flagged "Rachit Walla" as a bank account (it contains "ac").
     function determineType(name) {
-        let n = String(name).toLowerCase();
-        if(n.includes("ph") || n.includes("phone") || n.includes("call") || /\d{8,}/.test(n)) return "phone";
-        if(n.includes("ac") || n.includes("bank") || n.includes("account") || n.includes("tx")) return "bank";
+        const raw = String(name).trim();
+        const n = raw.toLowerCase();
+        const digits = raw.replace(/[\s()+-]/g, "");
+
+        // Phone / SIM - a real number, not just any id containing digits
+        if (/^\d{8,15}$/.test(digits) || /\b(phone|mobile|msisdn|imei|sim)\b/.test(n)) return "phone";
+        // Bank / financial - AC-102938, A/C 123, UPI, IFSC, txn
+        if (/^a\/?c[-\s]?\d/i.test(raw) || /\b(bank|account|acct|upi|ifsc|txn|transaction|wallet|card)\b/.test(n)) return "bank";
+        // Location - Indian address vocabulary
+        if (/\b(road|rd|marg|zila|district|nagar|colony|chowk|bazaar|market|sector|gali|lane|street|galli|tola|thana|station|village|city|pur|ganj)\b/.test(n)) return "location";
         return "person";
     }
 
     async function fetchKrakenGraph() {
         try {
-            const response = await fetch('/api/graph-data');
+            const [response, targetRes] = await Promise.all([
+                // Header settings (tower threshold / min evidence / devices) yahan lagti hain
+                fetch('/api/graph-data' + (window.krakenGraphQuery ? window.krakenGraphQuery() : '')),
+                fetch('/api/dossiers').catch(() => null)
+            ]);
             const data = await response.json();
+            // Optional enrichment - the graph still renders if this endpoint is down
+            let targetsData = { targets: [] };
+            try { if(targetRes) targetsData = await targetRes.json(); } catch(e) { console.warn("Target dossiers unavailable"); }
+            // Asli RIS score / badge / FIR counts -- ab koi random number nahi
+            (targetsData.targets || []).forEach(t => {
+                DOSSIERS[String(t.name).trim().toLowerCase()] = t;
+            });
             let nodesMap = new Map();
             let linksArr = [];
+            const params = new URLSearchParams(window.location.search);
+            const confirmedOnly = (params.get('filter') || '').trim().toLowerCase() === 'confirmed';
 
             if(data.status === "success") {
                 let raw = data.entities || {};
+                // Keys that describe an entity rather than name one. Walking these
+                // blindly is what used to spawn a stray node literally called "person".
+                const META_KEYS = new Set(['type','label','kind','category','group','class','role','color','badge','status','reasoning','confidence']);
+
+                function addNode(id, declaredType) {
+                    const cleanId = String(id == null ? '' : id).trim();
+                    if(!cleanId) return;
+                    const declared = String(declaredType || '').toLowerCase();
+                    // Trust an explicitly declared type only when it is more specific than
+                    // the generic "person" the feed stamps on every record.
+                    const type = (KNOWN_TYPES.includes(declared) && declared !== 'person')
+                        ? declared : determineType(cleanId);
+                    nodesMap.set(cleanId, {id: cleanId, type: type});
+                }
+
                 function extractNodes(obj) {
                     if(typeof obj === 'string' && obj.trim().length > 0) {
-                        let cleanId = obj.trim();
-                        nodesMap.set(cleanId, {id: cleanId, type: determineType(cleanId)});
+                        addNode(obj);
                     } else if(Array.isArray(obj)) {
                         obj.forEach(extractNodes);
                     } else if(typeof obj === 'object' && obj !== null) {
+                        // Canonical shape: { id: "...", type: "..." }
+                        if(typeof obj.id === 'string' || typeof obj.name === 'string') {
+                            addNode(obj.id || obj.name, obj.type);
+                            return;
+                        }
                         for (let [k, v] of Object.entries(obj)) {
-                            if (typeof v === 'string') {
-                                let cleanId = v.trim();
-                                nodesMap.set(cleanId, {id: cleanId, type: determineType(k + " " + cleanId)});
-                            } else {
-                                extractNodes(v);
-                            }
+                            if(META_KEYS.has(k.toLowerCase())) continue;
+                            if (typeof v === 'string') addNode(v, k);
+                            else extractNodes(v);
                         }
                     }
                 }
-                extractNodes(raw);
+                extractNodes(raw.nodes !== undefined ? raw.nodes : raw);
 
+                // ---- Devices & accounts on record against each target dossier ----
+                const targetLinks = [];
+                (targetsData.targets || []).forEach(t => {
+                    const owner = String(t.name || '').trim();
+                    if(!owner) return;
+                    if(!nodesMap.has(owner)) addNode(owner);
+                    const attach = (values, type) => (values || []).forEach(v => {
+                        const id = String(v).trim();
+                        if(!id) return;
+                        nodesMap.set(id, { id: id, type: type });
+                        targetLinks.push({ source: owner, target: id, type: "confirmed" });
+                    });
+                    attach(t.phones, "phone");
+                    attach(t.accounts, "bank");
+                });
+
+                const minConf = (window.krakenSettings ? window.krakenSettings().minConfidence : 0) || 0;
                 if(data.predictions && Array.isArray(data.predictions)) {
+                    data.predictions = data.predictions.filter(p => Number(p.confidence) >= minConf);
+                }
+                if(!confirmedOnly && data.predictions && Array.isArray(data.predictions)) {
                     data.predictions.forEach(pred => {
                         let src = String(pred.source).trim();
                         let tgt = String(pred.target).trim();
                         if(!nodesMap.has(src)) nodesMap.set(src, {id: src, type: determineType(src)});
                         if(!nodesMap.has(tgt)) nodesMap.set(tgt, {id: tgt, type: determineType(tgt)});
-                        linksArr.push({ source: src, target: tgt, type: "predicted", reasoning: pred.reasoning || "AI Pattern Match" });
+                        linksArr.push({ source: src, target: tgt, type: "predicted",
+                                        reasoning: pred.reasoning || "AI Pattern Match",
+                                        confidence: pred.confidence });
                     });
                     if(data.predictions.length > 0) {
                         document.getElementById('ai-alert-banner').classList.remove('hidden');
@@ -227,12 +489,76 @@
                 }
 
                 let nodesArr = Array.from(nodesMap.values());
-                if(nodesArr.length > 1) {
-                    for(let i=1; i < nodesArr.length; i++) {
-                        let targetIdx = Math.max(0, i - Math.floor(Math.random() * 4) - 1);
-                        linksArr.push({ source: nodesArr[i].id, target: nodesArr[targetIdx].id, type: "confirmed" });
+
+                if(confirmedOnly) {
+                    // Only links actually confirmed in the DB - no AI predictions, no demo fillers
+                    linksArr = [];
+                    const rawEdges = Array.isArray(raw.edges) ? raw.edges : [];
+                    rawEdges.forEach(e => {
+                        const src = String(e.source || e.from || '').trim();
+                        const tgt = String(e.target || e.to   || '').trim();
+                        if(!src || !tgt) return;
+                        if(!nodesMap.has(src)) nodesMap.set(src, {id: src, type: determineType(src)});
+                        if(!nodesMap.has(tgt)) nodesMap.set(tgt, {id: tgt, type: determineType(tgt)});
+                        linksArr.push({ source: src, target: tgt, type: "confirmed" });
+                    });
+                    // Keep only entities that actually sit on a confirmed link
+                    nodesArr = Array.from(nodesMap.values()).filter(n =>
+                        linksArr.some(l => l.source === n.id || l.target === n.id));
+
+                    const emptyEl = document.getElementById('graph-empty');
+                    if(linksArr.length === 0 && emptyEl) {
+                        emptyEl.classList.remove('hidden');
+                        emptyEl.classList.add('flex');
+                    }
+                } else {
+                    // Real confirmed edges from the feed win; the scaffold below only
+                    // fills in when the database has none (demo mode).
+                    const seen = new Set();
+                    const pushConfirmed = (src, tgt) => {
+                        if(!src || !tgt || src === tgt) return;
+                        const key = [src, tgt].sort().join('\u0000');
+                        if(seen.has(key)) return;
+                        seen.add(key);
+                        linksArr.push({ source: src, target: tgt, type: "confirmed" });
+                    };
+                    (Array.isArray(raw.edges) ? raw.edges : []).forEach(e => {
+                        const src = String(e.source || e.from || '').trim();
+                        const tgt = String(e.target || e.to   || '').trim();
+                        if(!nodesMap.has(src)) addNode(src);
+                        if(!nodesMap.has(tgt)) addNode(tgt);
+                        // Evidence yaad rakho taaki click par asli wajah dikha saken
+                        EDGE_META[[src, tgt].sort().join(EDGE_KEY_SEP)] = e;
+                        pushConfirmed(src, tgt);
+                    });
+                    nodesArr = Array.from(nodesMap.values());
+                    // NOTE: agar DB mein koi confirmed link nahi hai to yahan kuch
+                    // banaya NAHI jata. Pehle yahan random links generate hote the --
+                    // investigation tool mein wo galat evidence dikhana tha.
+                    if(seen.size === 0) {
+                        const emptyEl = document.getElementById('graph-empty');
+                        if(emptyEl) { emptyEl.classList.remove('hidden'); emptyEl.classList.add('flex'); }
                     }
                 }
+                if(targetLinks.length) {
+                    const existing = new Set(linksArr.map(l => [l.source, l.target].sort().join('\u0000')));
+                    targetLinks.forEach(l => {
+                        const key = [l.source, l.target].sort().join('\u0000');
+                        if(existing.has(key)) return;
+                        existing.add(key);
+                        linksArr.push(l);
+                    });
+                    nodesArr = Array.from(nodesMap.values());
+                    if(confirmedOnly) {
+                        nodesArr = nodesArr.filter(n => linksArr.some(l => l.source === n.id || l.target === n.id));
+                    }
+                    const emptyEl = document.getElementById('graph-empty');
+                    if(linksArr.length > 0 && emptyEl) {
+                        emptyEl.classList.add('hidden');
+                        emptyEl.classList.remove('flex');
+                    }
+                }
+
                 if(nodesArr.length > 0) renderGraph(nodesArr, linksArr);
             }
         } catch (error) { console.error("Engine Error:", error); }
@@ -249,16 +575,38 @@
             let s = typeof l.source === 'string' ? nodeById.get(l.source) : l.source;
             let t = typeof l.target === 'string' ? nodeById.get(l.target) : l.target;
             if(s && t) {
-                validLinks.push({ source: s, target: t, type: l.type, reasoning: l.reasoning });
+                validLinks.push({ source: s, target: t, type: l.type,
+                                  reasoning: l.reasoning, confidence: l.confidence });
                 linkedByIndex[`${s.id},${t.id}`] = 1; 
             }
         });
 
+        // Node radius scales with connection count, so hubs read as hubs at a glance.
+        const degree = new Map();
+        validLinks.forEach(l => {
+            degree.set(l.source.id, (degree.get(l.source.id) || 0) + 1);
+            degree.set(l.target.id, (degree.get(l.target.id) || 0) + 1);
+        });
+        nodesData.forEach(n => { n.degree = degree.get(n.id) || 0; });
+        const maxDegree = Math.max(1, d3.max(nodesData, n => n.degree) || 1);
+        const radiusOf = d => 8 + 14 * Math.sqrt(d.degree / maxDegree);
+
+        // Phones and accounts are attributes of their owner, not peers - they orbit
+        // close in, which keeps the graph compact and readable.
+        const isLeaf = d => d.type === 'phone' || d.type === 'bank';
+
         const simulation = d3.forceSimulation(nodesData)
-            .force("link", d3.forceLink(validLinks).distance(220))
-            .force("charge", d3.forceManyBody().strength(-900))
-            .force("collide", d3.forceCollide().radius(50).iterations(2))
-            .force("center", d3.forceCenter(width / 2, height / 2));
+            .force("link", d3.forceLink(validLinks)
+                .distance(l => (isLeaf(l.source) || isLeaf(l.target)) ? 120 : 210)
+                .strength(l => (isLeaf(l.source) || isLeaf(l.target)) ? 0.9 : 0.35))
+            .force("charge", d3.forceManyBody().strength(d => isLeaf(d) ? -220 : -820))
+            // Labels sit to the right of each shape, so reserve room for them too
+            .force("collide", d3.forceCollide()
+                .radius(d => radiusOf(d) + 12 + Math.min(62, String(d.id).length * (isLeaf(d) ? 2.6 : 3.2)))
+                .iterations(3))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("x", d3.forceX(width / 2).strength(0.04))
+            .force("y", d3.forceY(height / 2).strength(0.06));
 
         const linkGroup = graphLayer.append("g").selectAll("g.link-group")
             .data(validLinks).enter().append("g").attr("class", "link-group").style("cursor", "pointer");
@@ -289,11 +637,9 @@
             panel.classList.remove('hidden'); panel.classList.add('flex');
             document.getElementById('dossier-id').innerText = `${d.source.id} ↔ ${d.target.id}`;
             document.getElementById('dossier-type').innerText = `CONNECTION: ${d.type.toUpperCase()}`;
-            document.getElementById('dossier-risk').innerText = Math.floor(Math.random() * (99 - 80) + 80);
-            
-            let reason = `Confirmed transaction / call data.`;
-            if(d.type === "predicted") reason = `AI FLAG: ${d.reasoning || "Anomalous interaction detected."}`;
-            document.getElementById('dossier-reasoning').innerText = reason;
+            const person = [d.source, d.target].find(n => n.type === 'person');
+            setProfileLink(person ? person.id : null);
+            describeLink(d);
         });
 
         const node = graphLayer.append("g").selectAll("g")
@@ -322,25 +668,388 @@
             panel.classList.remove('hidden'); panel.classList.add('flex');
             document.getElementById('dossier-id').innerText = `ID: ${d.id}`;
             document.getElementById('dossier-type').innerText = `TYPE: ${d.type.toUpperCase()}`;
-            document.getElementById('dossier-risk').innerText = Math.floor(Math.random() * (99 - 75) + 75);
-            
-            let reason = "Entity extracted from intelligence feed.";
-            validLinks.forEach(l => { if((l.source.id === d.id || l.target.id === d.id) && l.type === "predicted") reason = `AI FLAG: ${l.reasoning}`; });
-            document.getElementById('dossier-reasoning').innerText = reason;
+            describeNode(d, validLinks);
         });
+
+    
+    // ==========================================================
+    // DOSSIER PANEL -- sab kuch dataset se, koi random number nahi.
+    // ==========================================================
+    const KIND_TEXT = {
+        co_accused: 'CO-ACCUSED IN FIR',
+        call:       'CDR CALL LINK',
+        money:      'MONEY TRANSFER',
+        intake:     'FIELD INTEL REPORT',
+        tower:      'TOWER CO-LOCATION',
+        owns_phone: 'REGISTERED SIM',
+        owns_account: 'BANK ACCOUNT'
+    };
+
+
+    // Panel ka "OPEN FULL PROFILE" button -- usi entity par jaana chahiye jise
+    // user ne click kiya hai. Pehle ye hamesha plain /profile kholta tha, isliye
+    // hamesha pehla target dikhta tha.
+    function setProfileLink(personName) {
+        const link = document.getElementById('dossier-profile-link');
+        const btn = document.getElementById('dossier-profile-btn');
+        if (!link || !btn) return;
+
+        if (personName) {
+            link.href = '/profile?target=' + encodeURIComponent(personName);
+            link.classList.remove('pointer-events-none');
+            btn.classList.remove('opacity-40');
+            btn.innerText = 'OPEN FULL PROFILE';
+        } else {
+            // Location jaisa node -- uska koi personal dossier hota hi nahi
+            link.href = '/profile';
+            link.classList.add('pointer-events-none');
+            btn.classList.add('opacity-40');
+            btn.innerText = 'NO PERSONAL DOSSIER';
+        }
+    }
+
+    // Phone / account node ka maalik dhoondo (owns_phone / owns_account edge se)
+    function ownerOf(nodeId, validLinks) {
+        const owners = validLinks
+            .filter(l => l.type === 'confirmed' && (l.source.id === nodeId || l.target.id === nodeId))
+            .map(l => (l.source.id === nodeId ? l.target : l.source))
+            .filter(n => n.type === 'person');
+        return owners.length ? owners[0].id : null;
+    }
+
+    function setRisk(value, label) {
+        const el = document.getElementById('dossier-risk');
+        el.innerText = value;
+        const wrap = el.parentElement;
+        if (wrap) wrap.firstChild.textContent = (label || 'RISK SCORE') + ': ';
+    }
+
+    // Ek link par click -> wahi evidence dikhao jo dataset mein hai
+    function describeLink(d) {
+        const key = [d.source.id, d.target.id].sort().join(EDGE_KEY_SEP);
+        const meta = EDGE_META[key];
+
+        if (d.type === 'predicted') {
+            const conf = (d.confidence !== undefined && d.confidence !== null)
+                ? Number(d.confidence).toFixed(1) : '--';
+            setRisk(conf, 'AI CONFIDENCE');
+            document.getElementById('dossier-reasoning').innerHTML =
+                '<span class="text-secondary-container">PREDICTED LINK &mdash; NOT YET CONFIRMED</span><br>' +
+                (d.reasoning || 'Structural overlap detected.');
+            return;
+        }
+
+        if (!meta) {
+            setRisk('--', 'EVIDENCE');
+            document.getElementById('dossier-reasoning').innerText =
+                'Confirmed link. Evidence detail unavailable.';
+            return;
+        }
+
+        setRisk(meta.weight || 1, 'EVIDENCE COUNT');
+        const kind = KIND_TEXT[meta.kind] || String(meta.kind || '').toUpperCase();
+        const detail = meta.detail ? '<br><span class="text-outline-variant">' + meta.detail + '</span>' : '';
+        const times = meta.weight > 1 ? ' &middot; recorded ' + meta.weight + ' times' : '';
+        document.getElementById('dossier-reasoning').innerHTML =
+            '<span class="text-primary-container">' + kind + '</span>' + times + detail;
+    }
+
+    // Ek node par click -> uska asli dossier (score, FIRs, devices, associates)
+    async function describeNode(d, validLinks) {
+        const box = document.getElementById('dossier-reasoning');
+        const rec = DOSSIERS[String(d.id).trim().toLowerCase()];
+
+        if (d.type !== 'person') {
+            // Phone / account / location -- iska owner ya usage dikhao
+            setRisk('--', 'RISK SCORE');
+            setProfileLink(d.type === 'location' ? null : ownerOf(d.id, validLinks));
+            const owners = validLinks
+                .filter(l => l.source.id === d.id || l.target.id === d.id)
+                .map(l => (l.source.id === d.id ? l.target.id : l.source.id));
+            const uniq = Array.from(new Set(owners));
+            box.innerHTML = uniq.length
+                ? '<span class="text-primary-container">' + d.type.toUpperCase() +
+                  '</span> on record against:<br>' + uniq.slice(0, 6).join('<br>')
+                : d.type.toUpperCase() + ' extracted from the intelligence feed. No link on record.';
+            return;
+        }
+
+        setRisk(rec ? rec.score : '--', 'RISK SCORE');
+        setProfileLink(d.id);
+        box.innerHTML = '<span class="text-outline-variant">Loading case record...</span>';
+
+        // AI flag (agar koi predicted link is node par hai)
+        const flags = validLinks.filter(l =>
+            l.type === 'predicted' && (l.source.id === d.id || l.target.id === d.id));
+
+        try {
+            const res = await fetch('/api/entity?name=' + encodeURIComponent(d.id));
+            const payload = await res.json();
+            if (payload.status !== 'success') throw new Error(payload.message);
+
+            const ent = payload.entity;
+            const dossier = ent.dossier || {};
+            const firs = dossier.firs || [];
+            const phones = dossier.phones || [];
+            const accounts = dossier.accounts || [];
+            const top = (ent.associates || []).slice(0, 3);
+
+            let html = '<div class="text-white">' + (dossier.badge || 'ENTITY') +
+                ' &middot; ' + ent.associates.length + ' confirmed associates</div>';
+            html += '<div class="text-outline-variant mt-1">' +
+                firs.length + ' FIR' + (firs.length === 1 ? '' : 's') + ' &middot; ' +
+                ent.call_total + ' CDR record' + (ent.call_total === 1 ? '' : 's') + ' &middot; ' +
+                ent.txn_total + ' transaction' + (ent.txn_total === 1 ? '' : 's') + '</div>';
+            if (ent.top_tower) {
+                html += '<div class="text-outline-variant">Most pinged tower: ' + ent.top_tower +
+                    ' (' + ent.tower_hits[ent.top_tower] + ')</div>';
+            }
+            if (phones.length) {
+                html += '<div class="text-secondary-fixed mt-1">' + phones.slice(0, 2).join(', ') + '</div>';
+            }
+            if (accounts.length) {
+                html += '<div class="text-error">' + accounts.slice(0, 2).join(', ') + '</div>';
+            }
+            if (top.length) {
+                html += '<div class="mt-2 text-outline-variant">STRONGEST LINKS</div>';
+                html += top.map(a => '<div class="text-on-surface-variant">&bull; ' + a.name +
+                    ' &mdash; <span class="text-outline-variant">' + a.reason + '</span></div>').join('');
+            }
+            if (flags.length) {
+                html += '<div class="mt-2 text-secondary-container">AI FLAG: ' + flags[0].reasoning + '</div>';
+            }
+            box.innerHTML = html;
+        } catch (err) {
+            console.error('Entity lookup failed:', err);
+            box.innerHTML = flags.length
+                ? '<span class="text-secondary-container">AI FLAG: ' + flags[0].reasoning + '</span>'
+                : 'Entity extracted from the intelligence feed.';
+        }
+    }
+
+
+    // ==========================================================
+    // PATH FINDER -- "ye do log kaise jude hain?"
+    // Shortest evidence chain nikalta hai aur graph par highlight karta hai.
+    // ==========================================================
+    let pathNodes = new Set();
+    let pathEdges = new Set();
+
+    const PATH_ICON = {
+        person: 'person', phone: 'smartphone', bank: 'account_balance', location: 'place'
+    };
+
+    function pathKey(a, b) {
+        return [a, b].sort().join(EDGE_KEY_SEP);
+    }
+
+    function clearPath() {
+        pathNodes = new Set();
+        pathEdges = new Set();
+        d3.selectAll('.node').classed('dimmed', false).classed('active', false);
+        d3.selectAll('.link').classed('dimmed', false)
+            .classed('highlight-link-teal', false).classed('highlight-link-amber', false);
+        const out = document.getElementById('path-result');
+        if (out) out.innerHTML = '';
+    }
+
+    function paintPath(result) {
+        pathNodes = new Set(result.nodes);
+        pathEdges = new Set(result.steps.map(s => pathKey(s.from, s.to)));
+
+        d3.selectAll('.node').classed('dimmed', d => !pathNodes.has(d.id))
+            .classed('active', d => pathNodes.has(d.id));
+        d3.selectAll('.link')
+            .classed('dimmed', d => !pathEdges.has(pathKey(d.source.id, d.target.id)))
+            .classed('highlight-link-teal', d => pathEdges.has(pathKey(d.source.id, d.target.id)));
+    }
+
+    function renderPathResult(result) {
+        const out = document.getElementById('path-result');
+        if (!out) return;
+
+        if (!result.found) {
+            out.innerHTML = `<div class="text-[10px] font-mono text-error p-2 border border-error/40 bg-error/5">${result.error}</div>`;
+            return;
+        }
+
+        const chain = result.steps.map((s, i) => {
+            const toType = result.node_types[s.to] || 'person';
+            return `
+                <div class="flex items-start gap-2 py-1.5 border-b border-outline-variant/20 last:border-0">
+                    <span class="text-[9px] font-mono text-outline-variant w-4 shrink-0 mt-0.5">${i + 1}</span>
+                    <div class="min-w-0">
+                        <div class="text-[10px] font-mono text-white truncate">
+                            <span class="material-symbols-outlined text-[11px] align-middle text-outline-variant">${PATH_ICON[toType] || 'hub'}</span>
+                            ${s.to}
+                        </div>
+                        <div class="text-[9px] font-mono text-primary-container">${s.label}${s.weight > 1 ? ` &middot; ${s.weight}x` : ''}</div>
+                        ${s.detail ? `<div class="text-[9px] font-mono text-outline-variant truncate">${s.detail}</div>` : ''}
+                    </div>
+                </div>`;
+        }).join('');
+
+        out.innerHTML = `
+            <div class="border border-primary-container/40 bg-primary-container/5">
+                <div class="px-2 py-1.5 border-b border-outline-variant/40 flex justify-between items-center">
+                    <span class="text-[9px] font-mono text-primary-container tracking-widest">
+                        ${result.hops} HOP${result.hops === 1 ? '' : 'S'}
+                    </span>
+                    <button class="text-[9px] font-mono text-outline-variant hover:text-primary-container" onclick="clearPath()">CLEAR</button>
+                </div>
+                <div class="px-2 py-1.5 text-[10px] font-mono text-outline-variant border-b border-outline-variant/20 truncate">
+                    START: <span class="text-white">${result.from}</span>
+                </div>
+                <div class="px-2 pb-1">${chain}</div>
+            </div>`;
+    }
+
+    async function tracePath() {
+        const fromEl = document.getElementById('path-from');
+        const toEl = document.getElementById('path-to');
+        const btn = document.getElementById('btn-trace');
+        const out = document.getElementById('path-result');
+        const from = fromEl.value.trim();
+        const to = toEl.value.trim();
+
+        if (!from || !to) {
+            out.innerHTML = `<div class="text-[10px] font-mono text-secondary-container p-2">Enter both entities to trace a connection.</div>`;
+            return;
+        }
+
+        btn.disabled = true;
+        const label = btn.innerHTML;
+        btn.innerHTML = 'TRACING...';
+        out.innerHTML = `<div class="text-[10px] font-mono text-outline-variant p-2 animate-pulse">Searching evidence chain...</div>`;
+
+        try {
+            const params = new URLSearchParams({ from: from, to: to });
+            const settings = window.krakenSettings ? window.krakenSettings() : null;
+            if (settings) {
+                params.set('devices', settings.showDevices ? '1' : '0');
+                params.set('tower_min', settings.towerMin);
+            }
+            const res = await fetch('/api/path?' + params.toString());
+            const data = await res.json();
+            renderPathResult(data);
+            if (data.found) paintPath(data);
+        } catch (e) {
+            out.innerHTML = `<div class="text-[10px] font-mono text-error p-2">Path service unavailable.</div>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = label;
+        }
+    }
+
+    // ---- simple autocomplete ----
+    function wireSuggest(inputId, listId) {
+        const input = document.getElementById(inputId);
+        const list = document.getElementById(listId);
+        let timer = null;
+
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            const term = input.value.trim();
+            if (term.length < 2) { list.innerHTML = ''; list.classList.add('hidden'); return; }
+            timer = setTimeout(async function () {
+                try {
+                    const res = await fetch('/api/search?q=' + encodeURIComponent(term));
+                    const data = await res.json();
+                    const hits = data.results || [];
+                    if (!hits.length) { list.innerHTML = ''; list.classList.add('hidden'); return; }
+                    list.innerHTML = hits.map(h =>
+                        `<div class="px-2 py-1 text-[10px] font-mono text-on-surface-variant hover:bg-surface-container-highest cursor-pointer truncate"
+                              onclick="document.getElementById('${inputId}').value='${String(h.id).replace(/'/g, "\\'")}'; document.getElementById('${listId}').classList.add('hidden');">
+                            <span class="material-symbols-outlined text-[11px] align-middle text-outline-variant">${PATH_ICON[h.type] || 'hub'}</span>
+                            ${h.id}
+                         </div>`).join('');
+                    list.classList.remove('hidden');
+                } catch (e) { list.classList.add('hidden'); }
+            }, 180);
+        });
+
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') { list.classList.add('hidden'); tracePath(); } });
+        input.addEventListener('blur', () => setTimeout(() => list.classList.add('hidden'), 180));
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('btn-trace');
+        if (!btn) return;
+        btn.addEventListener('click', tracePath);
+        document.getElementById('btn-path-clear').addEventListener('click', clearPath);
+        wireSuggest('path-from', 'path-from-list');
+        wireSuggest('path-to', 'path-to-list');
+    });
+
+    function hexPoints(r) {
+            const pts = [];
+            for(let i = 0; i < 6; i++) {
+                const a = Math.PI / 180 * (60 * i - 30);
+                pts.push(`${(r * Math.cos(a)).toFixed(2)},${(r * Math.sin(a)).toFixed(2)}`);
+            }
+            return pts.join(" ");
+        }
 
         node.each(function(d) {
             const group = d3.select(this);
-            if(d.type === 'person') { group.append("circle").attr("r", 12); } 
-            else if (d.type === 'phone') { group.append("path").attr("d", "M 0 -12 L 12 0 L 0 12 L -12 0 Z"); } 
-            else { group.append("rect").attr("width", 20).attr("height", 20).attr("x", -10).attr("y", -10).attr("rx", 4); }
-            group.append("text").attr("dx", 22).attr("dy", 4).text(d.id);
+            const r = radiusOf(d);
+            if(d.type === 'person')        { group.append("circle").attr("r", r); }
+            else if(d.type === 'phone')    { group.append("path").attr("d", `M 0 ${-r} L ${r} 0 L 0 ${r} L ${-r} 0 Z`); }
+            else if(d.type === 'location') { group.append("polygon").attr("points", hexPoints(r)); }
+            else                           { group.append("rect").attr("width", r * 1.7).attr("height", r * 1.7).attr("x", -r * 0.85).attr("y", -r * 0.85).attr("rx", 3); }
+            group.append("title").text(`${d.id}  -  ${d.type.toUpperCase()}  -  ${d.degree} connection(s)`);
+            group.append("text").attr("dx", r + 10).attr("dy", 4).text(d.id);
         });
+
+        // ---- Wire the MAP KEY to this render: counts + filtering ----
+        nodeSel = node;
+        linkSel = linkGroup;
+
+        const confirmedCount = validLinks.filter(l => l.type === "confirmed").length;
+        const predictedCount = validLinks.filter(l => l.type === "predicted").length;
+        document.getElementById('hud-nodes').innerText     = nodesData.length;
+        document.getElementById('hud-confirmed').innerText = confirmedCount;
+        document.getElementById('hud-predicted').innerText = predictedCount;
+
+        const counts = { confirmed: confirmedCount, predicted: predictedCount };
+        KNOWN_TYPES.forEach(t => { counts[t] = nodesData.filter(n => n.type === t).length; });
+        document.querySelectorAll('#legend-body [data-count]').forEach(el => {
+            const key = el.dataset.count;
+            const n = counts[key] || 0;
+            el.innerText = n;
+            // Absent types stay listed (the key is a full reference) but read as inactive
+            const row = el.closest('.legend-item');
+            if(row) row.classList.toggle('empty', n === 0);
+        });
+        applyFilters();
 
         simulation.on("tick", () => {
             linkGroup.selectAll("line").attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
             node.attr("transform", d => `translate(${d.x},${d.y})`);
         });
+
+        // ---- Frame the entire network once the force layout settles ----
+        fitToView = function(duration) {
+            const pts = nodesData.filter(d => isFinite(d.x) && isFinite(d.y) && filterState[d.type] !== false);
+            if(pts.length === 0) return;
+            const pad = d3.max(pts, d => radiusOf(d)) || 12;   // keep shapes off the edge
+            const minX = d3.min(pts, d => d.x) - pad, maxX = d3.max(pts, d => d.x) + pad;
+            const minY = d3.min(pts, d => d.y) - pad, maxY = d3.max(pts, d => d.y) + pad;
+            const legendOpen = !document.getElementById('graph-legend').classList.contains('collapsed');
+            const padL = legendOpen ? 300 : 40;   // clear the MAP KEY panel
+            const padR = 200;                     // room for node labels
+            const padY = 90;                      // clear the HUD and alert banner
+            const availW = Math.max(240, width - padL - padR);
+            const availH = Math.max(240, height - padY * 2);
+            const scale = Math.min(1.6, 0.92 * Math.min(availW / Math.max(maxX - minX, 1), availH / Math.max(maxY - minY, 1)));
+            const tx = padL + availW / 2 - scale * (minX + maxX) / 2;
+            const ty = padY  + availH / 2 - scale * (minY + maxY) / 2;
+            baseSvg.transition().duration(duration === undefined ? 750 : duration)
+                   .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        };
+        const autoFit = () => { if(!userZoomed) fitToView(); };
+        simulation.on("end", autoFit);
+        setTimeout(autoFit, 2600);   // fallback: "end" is not guaranteed to fire
 
         function dragstarted(event, d) { if(!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
         function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
@@ -371,6 +1080,7 @@
                         const x = width / 2 - d.x * scale;
                         const y = height / 2 - d.y * scale;
                         
+                        userZoomed = true;   // a search is a deliberate view change - don't auto-fit over it
                         baseSvg.transition()
                             .duration(750)
                             .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
@@ -386,4 +1096,6 @@
 
     document.addEventListener("DOMContentLoaded", fetchKrakenGraph);
 </script>
+<script src="/static/kraken_logout.js"></script>
+<script src="/static/kraken_header.js"></script>
 </body></html>
