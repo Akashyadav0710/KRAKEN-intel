@@ -389,16 +389,23 @@ def _build_graph(raw, intake_batches):
 
 # -------------------------------------------------------------- AI engine ----
 
-def adamic_adar(graph, top=15, threshold=0.1):
+def adamic_adar(graph, top=None, threshold=0.1):
     """
     Adamic-Adar link prediction (pure Python).
     Logic predict_hidden_links.py jaisa hi hai, bas networkx ke bina --
     aur reasoning ab asli common associates ke naam se banti hai.
+
+    top=None matlab poori ranked list. Caller jitna chahiye utna slice kare.
     """
     adj = {n: set(v) for n, v in graph.adjacency.items()}
     degree = {n: len(v) for n, v in adj.items()}
-    scored = []
 
+    def _aa(neighbours, other):
+        """Do logon ke beech ka Adamic-Adar score + unke common associates."""
+        common = neighbours & adj.get(other, set())
+        return sum(1.0 / math.log(degree[w]) for w in common if degree.get(w, 0) > 1), common
+
+    scored = []
     for u in adj:
         neighbours = adj[u]
         candidates = set()
@@ -410,42 +417,43 @@ def adamic_adar(graph, top=15, threshold=0.1):
         for v in candidates:
             if v <= u:            # har pair sirf ek baar
                 continue
-            common = neighbours & adj.get(v, set())
-            score = sum(1.0 / math.log(degree[w]) for w in common if degree.get(w, 0) > 1)
+            score, common = _aa(neighbours, v)
             if score > threshold:
                 scored.append((score, u, v, common))
 
     scored.sort(key=lambda row: (-row[0], row[1], row[2]))
 
-    # Confidence ko asli spread do.
+    # Confidence kis cheez ke against naapi jaye -- yahi asli sawaal tha.
     #
-    # Pehle formula tha: min(99, (score/(score+2))*100 + 65). Wo score ~1.03
-    # par hi 99 pe chipak jaata tha, aur is dataset mein sabse kamzor pair ka
-    # score bhi 1.8 hai -- yaani SAARI predictions "99%" dikhti thi aur number
-    # ka koi matlab hi nahi bachta tha (bell ka "95%+ links" alert bhi hamesha
-    # poori list par chal jaata tha).
+    # Pehla formula: min(99, (score/(score+2))*100 + 65). Wo score ~1.03 par
+    # hi 99 pe chipak jaata tha -- SAARI predictions "99%".
     #
-    # Ab har candidate ko poore scored set ke against percentile rank milta
-    # hai, phir usko 60-99 band par map karte hain. Ranking ab dikhti hai:
-    # sabse strong pair hi 99 par pahunchta hai.
-    ranked = sorted(row[0] for row in scored)
-    span = len(ranked) - 1
+    # Doosra formula: candidate set ke andar percentile rank, 60-99 band par.
+    # Wo bhi galat tha: hum dikhate sirf top 15 hain, aur top 15 to definition
+    # se hi candidate distribution ke top par baithe hain -- to sab 98-99%
+    # par chipak gaye (spread: 0.7 points). Aur kyunki rank relative tha,
+    # sabse strong pair hamesha 99% dikhta, chahe evidence kitna bhi kamzor ho.
+    #
+    # Ab baseline wahi hai jo baseline hona chahiye: jo links ALREADY confirmed
+    # hain unka Adamic-Adar score. Confidence = "is pair ka structural evidence
+    # kitne percent confirmed links se strong hai". 98% matlab ye pair 98%
+    # asli links se zyada juda hua dikhta hai -- number ab kuch kehta hai.
+    observed = sorted(_aa(adj[a], b)[0] for a in adj for b in adj[a] if b > a)
 
     def _confidence(value):
-        if span <= 0:
-            return 92.0
-        # kitne candidates is se kamzor hain
-        low, high = 0, len(ranked)
-        while low < high:                      # bisect_left, bina import ke
+        if not observed:
+            return 50.0
+        low, high = 0, len(observed)
+        while low < high:                      # bisect_right, bina import ke
             mid = (low + high) // 2
-            if ranked[mid] < value:
+            if observed[mid] <= value:
                 low = mid + 1
             else:
                 high = mid
-        return round(60.0 + 39.0 * (low / float(span)), 1)
+        return round(max(5.0, min(99.0, 100.0 * low / len(observed))), 1)
 
     predictions = []
-    for score, u, v, common in scored[:top]:
+    for score, u, v, common in (scored if top is None else scored[:top]):
         shared = sorted(common, key=lambda n: -degree.get(n, 0))
         kinds = set()
         for person in shared[:4]:
@@ -544,7 +552,11 @@ def predictions(top=15):
     g = graph()
     with _lock:
         if _state["predictions"] is None:
-            _state["predictions"] = adamic_adar(g, top=max(top, 15))
+            # Poori ranked list cache hoti hai. Pehle jo `top` sabse pehle
+            # maanga jaata tha wahi cache ho jaata tha -- to /api/graph-data
+            # (15) ke baad predictions(60) maangne par bhi sirf 15 milte the.
+            # Yaani result page-visit order par depend kar raha tha.
+            _state["predictions"] = adamic_adar(g)
         cached = _state["predictions"]
     return cached[:top]
 

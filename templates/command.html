@@ -275,11 +275,21 @@
                         let textClass = "text-secondary-container";
                         let badgeText = "ELEVATED";
 
-                        if(confidence >= 85) {
+                        // Confidence ab "kitne percent confirmed links se strong"
+                        // hai, isliye band bhi wahi hai jo bell alert use karta
+                        // hai (95). Pehle table 86% ko bhi CRITICAL keh raha tha
+                        // jabki bell usi link ko ignore kar raha tha.
+                        const conf = Number(confidence);
+                        if(conf >= 95) {
                             rowClass = "bg-error-container/5 border border-error-container/20 hover:bg-error-container/10 transition-colors";
                             badgeClass = "bg-error/20 text-error border border-error/50";
                             textClass = "text-error";
                             badgeText = "CRITICAL";
+                        } else if(conf >= 85) {
+                            rowClass = "bg-secondary-container/5 border border-secondary-container/20 hover:bg-secondary-container/10 transition-colors";
+                            badgeClass = "bg-secondary-container/20 text-secondary-container border border-secondary-container/50";
+                            textClass = "text-secondary-container";
+                            badgeText = "HIGH";
                         }
 
                         feedContainer.innerHTML += `

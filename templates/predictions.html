@@ -109,8 +109,8 @@
             <div class="bg-surface-container-low border border-outline-variant p-4 flex items-center gap-4">
                 <span class="material-symbols-outlined text-secondary-container text-[28px] opacity-80">psychology_alt</span>
                 <div>
-                    <div class="text-[10px] font-label-caps tracking-widest text-outline-variant">AI CONFIDENCE LEVEL</div>
-                    <div class="text-[20px] font-data-mono font-bold text-white mt-1">99.0%</div>
+                    <div class="text-[10px] font-label-caps tracking-widest text-outline-variant">TOP CONFIDENCE</div>
+                    <div class="text-[20px] font-data-mono font-bold text-white mt-1" id="top-confidence">...</div>
                 </div>
             </div>
             <div class="bg-surface-container-low border border-error/50 p-4 flex items-center gap-4 shadow-[0_0_15px_rgba(255,180,171,0.1)]">
@@ -155,6 +155,14 @@
                 const minConf = (window.krakenSettings ? window.krakenSettings().minConfidence : 0) || 0;
                 const preds = data.predictions.filter(p => Number(p.confidence) >= minConf);
                 countDisplay.innerText = preds.length;
+                // Header stat ab asli sabse strong prediction dikhata hai --
+                // pehle "99.0%" template me hardcoded tha.
+                const topConf = document.getElementById('top-confidence');
+                if (topConf) {
+                    topConf.innerText = preds.length
+                        ? Number(preds[0].confidence).toFixed(1) + '%'
+                        : 'N/A';
+                }
                 
                 if (preds.length === 0) {
                     container.innerHTML = `
@@ -173,7 +181,7 @@
                     const reason = pred.reasoning;
                     const displayConf = pred.confidence;
 
-                    const isHighRisk = displayConf >= 90;
+                    const isHighRisk = displayConf >= 95;   // bell alert aur command table ke saath same band
                     const borderColor = isHighRisk ? 'border-error/50' : 'border-secondary-container/50';
                     const textColor = isHighRisk ? 'text-error' : 'text-secondary-container';
                     const bgPulse = isHighRisk ? 'bg-error' : 'bg-secondary-container';
@@ -201,9 +209,6 @@
                                     <span class="text-[9px] font-label-caps ${textColor} mb-1 tracking-widest">AI LINK</span>
                                     <div class="w-full h-px bg-outline-variant relative">
                                         <div class="absolute top-0 left-0 h-full w-full ${bgPulse} animate-pulse shadow-[0_0_8px_currentColor]"></div>
-                                        <!-- Icon ko line par hi centre karo. Bina offsets ke `absolute`
-                                             tha, isliye wo flow se nikal kar "AI LINK" text par chadh
-                                             jaata tha. -->
                                         <span class="material-symbols-outlined text-[16px] ${textColor} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface px-1">link</span>
                                     </div>
                                 </div>
