@@ -1,10 +1,12 @@
-from flask import Flask, render_template, jsonify, request, session, url_for
+from flask import (Flask, abort, jsonify, redirect, render_template, request,
+                   send_from_directory, session, url_for)
 import os
 import secrets
 import signal
 import threading
 import time
 
+import fir_registry
 import kraken_data
 
 app = Flask(__name__)
@@ -18,6 +20,8 @@ app.secret_key = os.environ.get("KRAKEN_SECRET_KEY") or secrets.token_hex(32)
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
+    # Evidence images base64 mein aati hain -- body ki chhat baandh do.
+    MAX_CONTENT_LENGTH=32 * 1024 * 1024,
 )
 
 # Demo mode: koi bhi non-empty Clearance ID + Biometric Hash chalega.
@@ -27,9 +31,10 @@ app.config.update(
 EXPECTED_CLEARANCE_ID = os.environ.get("KRAKEN_CLEARANCE_ID")
 EXPECTED_BIOMETRIC_KEY = os.environ.get("KRAKEN_BIOMETRIC_KEY")
 
-# NOTE: Koi clearance gate nahi hai. Saare pages seedhe khulte hain -- bar bar
-# password maangna demo ke beech irritating tha. Login screen sirf dikhane ke
-# liye hai (/login), wo kisi page ko block nahi karti.
+# NOTE: Clearance gate ON hai. App pehli baar khulte hi /login maangta hai.
+# Ek baar handshake ho jaye to session cookie chalti rehti hai -- interfaces ke
+# beech navigate karne pe dobara password nahi maanga jaata. Sirf logout (jo
+# session clear karta hai) ke baad wapas login screen pe credentials lagenge.
 
 
 def _safe_next(target):
@@ -39,6 +44,34 @@ def _safe_next(target):
     if target in ("/", "/login"):
         return None
     return target
+
+# ==========================================
+# 0b. CLEARANCE GATE
+# ==========================================
+# Ye endpoints bina clearance ke khulte hain, warna login screen hi load na ho
+# paaye (aur logout to sirf apni session clear karta hai).
+PUBLIC_ENDPOINTS = {'login', 'api_login', 'logout', 'static'}
+
+
+@app.before_request
+def require_clearance():
+    """Har request se pehle clearance check -- session me flag hai to jaane do."""
+    if request.endpoint in PUBLIC_ENDPOINTS or request.method == 'OPTIONS':
+        return None
+    if session.get('kraken_auth'):
+        return None
+
+    # API calls ko JSON 401 do taaki frontend khud handle kar sake; HTML pages
+    # ko login screen pe bhejo aur waapsi ka raasta `next` me rakh lo.
+    if request.path.startswith('/api/'):
+        return jsonify({
+            "status": "error",
+            "message": "CLEARANCE REQUIRED",
+            "redirect": url_for('login')
+        }), 401
+
+    return redirect(url_for('login', next=_safe_next(request.full_path.rstrip('?'))))
+
 
 # --- BROWSER CACHE BUSTER (Taaki refresh pe turant update ho) ---
 @app.after_request
@@ -68,6 +101,12 @@ def intake(): return render_template('intake.html')
 def profile(): return render_template('profile.html')
 @app.route('/reports')
 def reports(): return render_template('reports.html')
+@app.route('/cases')
+def cases():
+    # Pehli baar khulne par khaali na dikhe -- graph ki asli entities se
+    # purane FIR seed ho jaate hain.
+    fir_registry.ensure_seeded()
+    return render_template('cases.html')
 
 # ==========================================
 # 1b. CLEARANCE HANDSHAKE
@@ -419,6 +458,185 @@ def logout():
         "redirect": url_for('login'),
         "message": "Clearance revoked. Returning to secure access."
     })
+
+
+# ==========================================
+# 4. FIR INTAKE / CASE FILES
+# ==========================================
+# Pehle intake page browser ke regex se naam dhoondta tha aur sirf
+# names/phones/banks bhejta tha. Ab poora FIR server par jaata hai: spaCy NER
+# entities nikalta hai, case file banti hai, graph merge hota hai, purane
+# cases se cross-match hota hai aur PDF generate hoti hai.
+
+@app.route('/api/fir/extract', methods=['POST'])
+def fir_extract():
+    """Register kiye bina live preview -- operator ko dikhe kya pakda gaya."""
+    try:
+        data = request.get_json(silent=True) or {}
+        mode = (data.get('mode') or 'passage').lower()
+        form = data.get('form') or {}
+        text = (fir_registry.compose_narrative(form)
+                if mode == 'form' else (data.get('narrative') or ''))
+        return jsonify({
+            "status": "success",
+            "narrative": text,
+            # register_fir wahi path use karta hai -- preview aur asli result
+            # kabhi alag nahi honge.
+            "extracted": fir_registry.extract_for(mode, text, form),
+        })
+    except Exception as exc:
+        app.logger.exception("fir extract failed")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route('/api/fir/register', methods=['POST'])
+def fir_register():
+    """FIR register karo -> case file + profile + network + alerts + PDF."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        payload.setdefault('officer', session.get('operator') or 'DUTY OFFICER')
+        result = fir_registry.register_fir(payload)
+    except ValueError as exc:
+        # Operator ki galti (khaali text, bad image) -- 400, 500 nahi.
+        return jsonify({"status": "error", "message": str(exc)}), 400
+    except Exception as exc:
+        app.logger.exception("fir register failed")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+    case = result["case"]
+    return jsonify({
+        "status": "success",
+        "case_no": case["case_no"],
+        "fir_number": case["fir_number"],
+        "title": case["title"],
+        "extracted": case["extracted"],
+        "evidence": [{"caption": e["caption"],
+                      "url": "/case-files/evidence/%s" % e["file"]}
+                     for e in case["evidence"]],
+        "matches": case["matches"],
+        "notifications": result["notifications"],
+        "merge": result["merge"],
+        "pdf_url": result["pdf_url"],
+    })
+
+
+@app.route('/api/fir/seed', methods=['POST'])
+def fir_seed():
+    """Database khaali ho to graph ki asli entities se purane FIR bana do."""
+    try:
+        data = request.get_json(silent=True) or {}
+        existing = fir_registry.list_cases()
+        if existing:
+            return jsonify({
+                "status": "success", "seeded": [],
+                "message": "%d case file(s) already on record — nothing seeded." % len(existing),
+            })
+        seeded = fir_registry.seed_cases(int(data.get('count') or 12))
+        return jsonify({
+            "status": "success", "seeded": seeded,
+            "message": "%d case file(s) built from entities already in the database." % len(seeded),
+        })
+    except Exception as exc:
+        app.logger.exception("seed failed")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route('/api/fir/cases', methods=['GET'])
+def fir_cases():
+    try:
+        fir_registry.ensure_seeded()
+        limit = request.args.get('limit', type=int)
+        return jsonify({"status": "success", "cases": fir_registry.list_cases(limit)})
+    except Exception as exc:
+        app.logger.exception("case list failed")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route('/api/fir/<case_no>', methods=['GET'])
+def fir_detail(case_no):
+    case = fir_registry.get_case(case_no)
+    if not case:
+        return jsonify({"status": "error", "message": "No such case: %s" % case_no}), 404
+    payload = dict(case)
+    payload["evidence"] = [{"caption": e["caption"],
+                            "url": "/case-files/evidence/%s" % e["file"]}
+                           for e in case.get("evidence") or []]
+    payload["pdf_url"] = "/api/fir/%s/pdf" % case["case_no"] if case.get("pdf") else None
+    return jsonify({"status": "success", "case": payload})
+
+
+@app.route('/api/fir/<case_no>/pdf', methods=['GET'])
+def fir_pdf_download(case_no):
+    path = fir_registry.case_pdf_path(case_no)
+    if not path:
+        return jsonify({"status": "error", "message": "No PDF on file for %s" % case_no}), 404
+    return send_from_directory(
+        fir_registry.PDF_DIR, os.path.basename(path),
+        mimetype='application/pdf', as_attachment=False,
+        download_name='%s-FIR.pdf' % case_no.upper())
+
+
+@app.route('/api/fir/<case_no>', methods=['DELETE'])
+def fir_delete(case_no):
+    if not fir_registry.delete_case(case_no):
+        return jsonify({"status": "error", "message": "No such case: %s" % case_no}), 404
+    return jsonify({"status": "success", "message": "%s withdrawn." % case_no})
+
+
+# ---------------------------------------------------------- notifications --
+@app.route('/api/notifications', methods=['GET'])
+def get_notifications():
+    try:
+        unread_only = request.args.get('unread') in ('1', 'true', 'yes')
+        rows = fir_registry.notifications(unread_only=unread_only)
+        return jsonify({
+            "status": "success",
+            "notifications": rows,
+            "unread": sum(1 for r in rows if not r.get("read")),
+        })
+    except Exception as exc:
+        app.logger.exception("notifications failed")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route('/api/notifications/read', methods=['POST'])
+def read_notifications():
+    data = request.get_json(silent=True) or {}
+    changed = fir_registry.mark_read(data.get('ids'))
+    return jsonify({"status": "success", "marked": changed})
+
+
+# ------------------------------------------------------------ photos ------
+@app.route('/api/person-photo', methods=['POST'])
+def set_photo():
+    """Profile avatar par paste ki hui accused photo."""
+    try:
+        data = request.get_json(silent=True) or {}
+        result = fir_registry.set_person_photo(data.get('name'), data.get('image') or data)
+        return jsonify({"status": "success", **result})
+    except ValueError as exc:
+        return jsonify({"status": "error", "message": str(exc)}), 400
+    except Exception as exc:
+        app.logger.exception("photo save failed")
+        return jsonify({"status": "error", "message": str(exc)}), 500
+
+
+@app.route('/api/person-photos', methods=['GET'])
+def list_photos():
+    name = (request.args.get('name') or '').strip()
+    if name:
+        return jsonify({"status": "success", "photo": fir_registry.get_person_photo(name)})
+    return jsonify({"status": "success", "photos": fir_registry.all_photos()})
+
+
+# Evidence/photo files. Gate ke peeche hain -- bina clearance ke nahi khulte.
+@app.route('/case-files/<kind>/<path:filename>')
+def case_file(kind, filename):
+    folders = {"evidence": fir_registry.EVIDENCE_DIR, "photos": fir_registry.PHOTO_DIR}
+    directory = folders.get(kind)
+    if not directory:
+        abort(404)
+    return send_from_directory(directory, filename)
 
 
 if __name__ == '__main__':

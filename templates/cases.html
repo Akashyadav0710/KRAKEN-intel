@@ -1,0 +1,518 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kraken - Case Files</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-highest": "#30353e", "tertiary-container": "#ffcec7", "on-primary-container": "#006970",
+                      "on-error-container": "#ffdad6", "on-secondary-fixed-variant": "#5e4200", "surface-bright": "#343942",
+                      "tertiary": "#fff3f1", "on-background": "#dee2ee", "on-secondary": "#412d00", "surface-container-lowest": "#090e16",
+                      "primary-container": "#00f0ff", "tertiary-fixed-dim": "#ffb4aa", "surface-dim": "#0f141b", "on-surface-variant": "#b9cacb",
+                      "on-tertiary-fixed": "#410001", "secondary-fixed": "#ffdea8", "error": "#ffb4ab", "outline-variant": "#3b494b",
+                      "primary-fixed-dim": "#00dbe9", "inverse-on-surface": "#2c3139", "on-primary-fixed-variant": "#004f54",
+                      "on-primary-fixed": "#002022", "on-error": "#690005", "outline": "#849495", "surface-container": "#1b2028",
+                      "surface-variant": "#30353e", "surface-container-low": "#171c24", "on-tertiary-fixed-variant": "#930005",
+                      "inverse-primary": "#006970", "inverse-surface": "#dee2ee", "secondary-container": "#feb700", "on-primary": "#00363a",
+                      "error-container": "#93000a", "background": "#0f141b", "primary": "#dbfcff", "on-secondary-container": "#6b4b00",
+                      "primary-fixed": "#7df4ff", "surface-tint": "#00dbe9", "on-secondary-fixed": "#271900", "secondary": "#ffdb9d",
+                      "tertiary-fixed": "#ffdad5", "surface-container-high": "#252a33", "on-tertiary": "#690003", "secondary-fixed-dim": "#ffba20",
+                      "on-surface": "#dee2ee", "on-tertiary-container": "#c1000a", "surface": "#0f141b"
+              },
+              "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+              "spacing": { "unit": "4px", "margin": "24px", "container-max": "100%", "gutter": "16px" },
+              "fontFamily": { "status-sm": ["JetBrains Mono"], "headline-md": ["Inter"], "body-base": ["Inter"], "data-mono": ["JetBrains Mono"], "label-caps": ["JetBrains Mono"], "display-lg": ["Inter"] }
+            }
+          }
+        }
+    </script>
+<style>
+        .scan-line { background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 50%, rgba(0, 240, 255, 0.05) 50%, rgba(0, 240, 255, 0.05)); background-size: 100% 4px; pointer-events: none; }
+        .flicker { animation: textFlicker 3s infinite alternate; }
+        @keyframes textFlicker { 0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; } 20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.4; } }
+        .glow-border:focus-within { box-shadow: 0 0 10px rgba(0, 240, 255, 0.2), inset 0 0 5px rgba(0, 240, 255, 0.1); border-color: #00f0ff; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0f141b; }
+        ::-webkit-scrollbar-thumb { background: #3b494b; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+</style>
+</head>
+<body class="bg-background text-on-background h-screen flex flex-col font-body-base overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<div class="fixed inset-0 scan-line z-50 pointer-events-none mix-blend-screen opacity-50"></div>
+
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-surface/90 backdrop-blur-md border-b border-outline-variant text-primary">
+    <div class="flex items-center gap-gutter">
+        <div class="text-[24px] font-bold tracking-tighter text-primary-container">Kraken</div>
+        <div class="relative hidden md:flex items-center ml-4">
+            <span class="material-symbols-outlined absolute left-2 text-on-surface-variant text-[18px]">search</span>
+            <input class="bg-surface-container-low border border-outline-variant text-[13px] font-mono text-on-surface pl-8 pr-3 py-1.5 focus:border-primary-container focus:outline-none w-64 placeholder:text-on-surface-variant/50 transition-colors" placeholder="QUERY DATABASE..." type="text">
+            <div class="absolute right-2 top-2 w-1.5 h-1.5 bg-primary-container animate-pulse rounded-full opacity-70"></div>
+        </div>
+    </div>
+    <div class="flex items-center gap-4">
+        <span class="text-[11px] font-mono text-secondary-container tracking-widest hidden lg:block border border-secondary-container/30 px-2 py-0.5 bg-secondary-container/5">CLEARANCE: OMEGA</span>
+        <div class="flex items-center gap-1">
+            <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
+            <button class="p-2 text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-[20px]">settings</span></button>
+            <button class="p-2 text-primary-container transition-colors" onclick="window.location.href='/intake'" title="NLP intake terminal"><span class="material-symbols-outlined text-[20px]">terminal</span></button>
+        </div>
+        <div class="w-px h-6 bg-outline-variant mx-2"></div>
+        <div class="flex items-center gap-3">
+            <img alt="User Profile Avatar" class="w-8 h-8 object-cover border border-outline-variant p-0.5 grayscale hover:grayscale-0 transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2FNx_jB8pBhqUGB-P5Tx_BsSQ9HXyCxfZmgzLZfbFwFf23DJbo_Zp1gg5ElHR07kB0mf1wYiqKkB4g1uhmMNbXpbgX7-Mp1CdYG99iJS1RMBTip6ivAoY_yqc8wzV4wGDF8UVTzEQJBB58k4PevR7I0Lso0kBKeHCsMF9ptuzlzfLeinw8OwhaJydy-4WpebrrIvylvYO4UC_Ny6ruNY3SQJJUp9SRKRWQeiznKWak8zp3BhkrKdO">
+            <button class="text-[13px] font-mono text-primary-container border border-primary-container/50 px-3 py-1 hover:bg-primary-container hover:text-[#00363a] transition-colors" type="button" onclick="return krakenLogout(event);" title="Terminate session and return to secure access">SECURE LOGOUT</button>
+        </div>
+    </div>
+</header>
+
+<nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col z-40 bg-surface-container-low border-r border-outline-variant text-primary-fixed-dim">
+    <div class="p-4 border-b border-outline-variant/50 flex items-center gap-3 bg-surface-container">
+        <div class="w-8 h-8 border border-primary-container/30 bg-surface-dim flex items-center justify-center relative">
+            <div class="absolute inset-0 bg-primary-container/10 animate-pulse"></div>
+            <span class="material-symbols-outlined text-primary-container text-[16px]">radar</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-[11px] font-mono text-primary-fixed leading-tight">Kraken v4.0</span>
+            <span class="text-[10px] font-mono text-outline flicker leading-tight mt-0.5">CASE ARCHIVE</span>
+        </div>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto py-2 flex flex-col gap-0.5 text-[11px] font-mono">
+        <a href="/command" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="tracking-widest">Command</span></a>
+        <a href="/network" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">hub</span><span class="tracking-widest">Network</span></a>
+        <a href="/predictions" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">psychology</span><span class="tracking-widest">Predictions</span></a>
+        <a href="/syndicates" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">groups</span><span class="tracking-widest">Syndicates</span></a>
+        
+        <!-- Active Tab: Intake -->
+        <a href="/intake" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">upload_file</span><span class="tracking-widest">Intake</span></a>
+        
+        <a href="/profile" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">person_search</span><span class="tracking-widest">Profiles</span></a>
+        <a href="/reports" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">description</span><span class="tracking-widest">Reports</span></a>
+        <a href="/cases" class="flex items-center gap-3 text-primary bg-surface-container-highest border-l-4 border-primary px-4 py-3 group relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <span class="material-symbols-outlined text-[18px]">folder_open</span><span class="tracking-widest">Case Files</span>
+        </a>
+    </div>
+    
+    <div class="p-4 border-t border-outline-variant/50 flex flex-col gap-3">
+        <button class="w-full bg-primary-container text-[#00363a] text-[11px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)]" onclick="window.location.href='/intake'" title="Open the intake console to file new intelligence">NEW CASE</button>
+        <div class="flex justify-between items-center text-[11px] font-mono mt-2">
+            <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">code</span> Terminal</a>
+            <a class="flex items-center gap-2 text-on-surface-variant hover:text-primary-container transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">help</span> Support</a>
+        </div>
+    </div>
+</nav>
+
+
+<main class="ml-64 mt-16 p-unit flex-1 h-[calc(100vh-64px)] bg-background overflow-hidden">
+    <div class="h-full grid grid-cols-12 grid-rows-[minmax(0,1fr)] gap-unit p-2">
+
+    <!-- ======================= LEFT: FIR ROSTER ======================= -->
+    <div class="col-span-12 lg:col-span-4 bg-surface border border-outline-variant flex flex-col h-full min-h-0 overflow-hidden">
+        <div class="bg-surface-container px-4 py-3 border-b border-outline-variant flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px] text-primary-container">folder_open</span>
+                <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Previous FIRs</span>
+            </div>
+            <span class="text-[9px] font-mono text-outline-variant" id="roster-count">--</span>
+        </div>
+
+        <div class="p-3 border-b border-outline-variant/40 shrink-0 space-y-2">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline-variant text-[16px]">search</span>
+                <input id="case-search" type="text" spellcheck="false" placeholder="FILTER BY CASE, FIR, SUBJECT, SECTION..."
+                       class="w-full bg-surface-container-lowest border border-outline-variant text-[11px] font-mono text-on-surface pl-8 pr-3 py-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
+            </div>
+            <div class="flex gap-2">
+                <button id="btn-new-fir" class="flex-1 bg-primary-container text-[#00363a] text-[10px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors flex items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">add</span> FILE NEW FIR</button>
+                <button id="btn-seed" class="text-[10px] font-mono text-outline-variant border border-outline-variant px-3 hover:border-primary-container hover:text-primary-container transition-colors flex items-center gap-1" title="Generate case files from entities already in the database">
+                    <span class="material-symbols-outlined text-[14px]">auto_awesome</span> SEED</button>
+            </div>
+        </div>
+
+        <div id="case-roster" class="flex-1 min-h-0 overflow-y-auto"></div>
+    </div>
+
+    <!-- ======================= RIGHT: CASE DETAIL ======================= -->
+    <div class="col-span-12 lg:col-span-8 bg-surface border border-outline-variant flex flex-col h-full min-h-0 overflow-hidden">
+        <div class="bg-surface-container px-4 py-3 border-b border-outline-variant flex items-center justify-between shrink-0 gap-3">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="material-symbols-outlined text-[18px] text-primary-container shrink-0">description</span>
+                <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase truncate" id="detail-title">Select a case file</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0" id="detail-actions"></div>
+        </div>
+
+        <div id="detail-body" class="flex-1 min-h-0 overflow-y-auto"></div>
+    </div>
+
+    </div>
+</main>
+
+<!-- Evidence lightbox -->
+<div id="lightbox" class="hidden fixed inset-0 z-[80] bg-black/85 backdrop-blur-sm items-center justify-center p-8"
+     onclick="this.classList.add('hidden');this.classList.remove('flex')">
+    <img id="lightbox-img" class="max-w-full max-h-full border border-primary-container/40" alt="Evidence">
+</div>
+
+<style>
+    .chip { display:inline-flex; align-items:center; gap:4px; border:1px solid; padding:2px 7px;
+            font-family:'JetBrains Mono',monospace; font-size:10px; margin:0 4px 4px 0; }
+    .ev-thumb { position:relative; width:84px; height:84px; border:1px solid #3b494b; overflow:hidden; cursor:pointer; }
+    .ev-thumb img { width:100%; height:100%; object-fit:cover; }
+    .case-row { cursor:pointer; }
+    .case-row.on { background:#252a33; border-left-color:#00f0ff; }
+    .act { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.1em;
+           padding:4px 8px; border:1px solid; display:inline-flex; align-items:center; gap:4px;
+           transition:all .15s; cursor:pointer; text-decoration:none; }
+</style>
+
+<script>
+// ==========================================================
+// KRAKEN -- CASE FILES (previously registered FIRs)
+// Roster + full dossier + PDF/print. Database khaali ho to server
+// khud graph ki asli entities se purane FIR seed kar deta hai.
+// ==========================================================
+(function () {
+    "use strict";
+
+    var cases = [], current = null;
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (v) {
+        return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    };
+
+    async function api(path, body, method) {
+        var res = await fetch(path, {
+            method: method || (body ? "POST" : "GET"), cache: "no-store",
+            headers: body ? { "Content-Type": "application/json" } : undefined,
+            body: body ? JSON.stringify(body) : undefined
+        });
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok || data.status !== "success") {
+            throw new Error(data.message || ("request failed (" + res.status + ")"));
+        }
+        return data;
+    }
+
+    // ------------------------------------------------------------ roster --
+    function matches(c, q) {
+        if (!q) return true;
+        var hay = [c.case_no, c.fir_number, c.title, c.officer]
+            .concat(c.persons || [], c.phones || [], c.accounts || []).join(" ").toLowerCase();
+        return hay.indexOf(q) !== -1;
+    }
+
+    function renderRoster() {
+        var q = ($("case-search").value || "").trim().toLowerCase();
+        var shown = cases.filter(function (c) { return matches(c, q); });
+        $("roster-count").innerText = shown.length === cases.length
+            ? cases.length + (cases.length === 1 ? " case" : " cases")
+            : shown.length + " of " + cases.length;
+
+        if (!shown.length) {
+            $("case-roster").innerHTML = '<div class="p-6 text-center text-[11px] font-mono text-outline-variant">'
+                + (cases.length ? "No case matches that filter."
+                                : "No FIR on record yet.<br><br>Use <b class=\'text-primary-container\'>SEED</b> to build case files from entities already in the database, or file a new FIR.")
+                + '</div>';
+            return;
+        }
+
+        $("case-roster").innerHTML = shown.map(function (c) {
+            var when = (c.registered_at || "").replace("T", " ").slice(0, 16);
+            return '<div class="case-row px-3 py-3 border-b border-outline-variant/20 border-l-4 border-l-transparent hover:bg-surface-container transition-colors'
+                + (current === c.case_no ? ' on' : '') + '" data-case="' + esc(c.case_no) + '">'
+                + '<div class="flex justify-between items-start gap-2">'
+                + '<span class="text-[11px] font-mono text-white">' + esc(c.case_no) + '</span>'
+                + (c.match_count ? '<span class="text-[8px] font-mono text-error border border-error/50 px-1 shrink-0">'
+                                   + c.match_count + ' LINK</span>' : '')
+                + '</div>'
+                + '<div class="text-[10px] font-mono text-primary-container truncate mt-0.5">' + esc(c.title || "") + '</div>'
+                + '<div class="text-[9px] font-mono text-outline-variant mt-1 truncate">'
+                + (c.fir_number ? "FIR " + esc(c.fir_number) + " &middot; " : "") + esc(when) + '</div>'
+                + '<div class="text-[9px] font-mono text-on-surface-variant mt-1 truncate">'
+                + esc((c.persons || []).slice(0, 3).join(", ")) + '</div>'
+                + '</div>';
+        }).join("");
+
+        Array.prototype.forEach.call(document.querySelectorAll(".case-row"), function (row) {
+            row.addEventListener("click", function () { openCase(row.dataset.case); });
+        });
+    }
+
+    // ------------------------------------------------------------ detail --
+    var CHIP = {
+        persons:   ["person", "#00f0ff", "SUBJECTS"],
+        phones:    ["smartphone", "#ffba20", "SIMS"],
+        accounts:  ["account_balance", "#ffb4ab", "ACCOUNTS"],
+        locations: ["place", "#ffdad5", "LOCATIONS"],
+        vehicles:  ["directions_car", "#7df4ff", "VEHICLES"],
+        sections:  ["gavel", "#feb700", "SECTIONS"],
+        dates:     ["event", "#b9cacb", "DATES"]
+    };
+
+    function chips(values, style) {
+        if (!values || !values.length) return "";
+        return '<div class="mb-3"><div class="text-[9px] font-mono text-outline-variant tracking-widest mb-1">'
+            + style[2] + ' (' + values.length + ')</div><div>'
+            + values.map(function (v) {
+                return '<span class="chip" style="border-color:' + style[1] + ';color:' + style[1] + '">'
+                    + '<span class="material-symbols-outlined" style="font-size:12px">' + style[0] + '</span>'
+                    + esc(v) + '</span>';
+              }).join("") + '</div></div>';
+    }
+
+    function section(title, inner) {
+        if (!inner) return "";
+        return '<div class="px-5 py-4 border-b border-outline-variant/30">'
+            + '<div class="text-[10px] font-mono text-primary-container tracking-widest mb-3">' + title + '</div>'
+            + inner + '</div>';
+    }
+
+    function kv(rows) {
+        return '<div class="grid grid-cols-[130px_1fr] gap-y-1.5 gap-x-3 text-[11px] font-mono">'
+            + rows.map(function (r) {
+                return '<div class="text-outline-variant">' + esc(r[0]) + '</div>'
+                     + '<div class="text-on-surface">' + (r[1] ? esc(r[1]) : '&mdash;') + '</div>';
+              }).join("") + '</div>';
+    }
+
+    async function openCase(caseNo) {
+        current = caseNo;
+        renderRoster();
+        $("detail-title").innerText = caseNo;
+        $("detail-body").innerHTML = '<div class="p-6 text-[11px] font-mono text-outline-variant animate-pulse">OPENING CASE FILE...</div>';
+        $("detail-actions").innerHTML = "";
+
+        var c;
+        try {
+            c = (await api("/api/fir/" + encodeURIComponent(caseNo))).case;
+        } catch (err) {
+            $("detail-body").innerHTML = '<div class="p-6 text-[11px] font-mono text-error">COULD NOT OPEN: ' + esc(err.message) + '</div>';
+            return;
+        }
+        window.krakenCurrentCase = c;
+
+        // ---- action buttons ----
+        $("detail-actions").innerHTML =
+            (c.pdf_url ? '<a href="' + c.pdf_url + '" target="_blank" class="act text-primary-container border-primary-container/60 hover:bg-primary-container/10">'
+                         + '<span class="material-symbols-outlined" style="font-size:13px">picture_as_pdf</span>PDF</a>' : '')
+            + '<button class="act text-on-surface-variant border-outline-variant hover:text-primary-container hover:border-primary-container" onclick="krakenPrintCase()">'
+            + '<span class="material-symbols-outlined" style="font-size:13px">print</span>PRINT</button>'
+            + '<a href="/network" class="act text-on-surface-variant border-outline-variant hover:text-primary-container hover:border-primary-container">'
+            + '<span class="material-symbols-outlined" style="font-size:13px">hub</span>NETWORK</a>'
+            + ((c.extracted.persons || []).length
+                ? '<a href="/profile?name=' + encodeURIComponent(c.extracted.persons[0]) + '" class="act text-on-surface-variant border-outline-variant hover:text-primary-container hover:border-primary-container">'
+                  + '<span class="material-symbols-outlined" style="font-size:13px">person_search</span>PROFILE</a>'
+                : '');
+
+        var e = c.extracted || {};
+        var when = (c.registered_at || "").replace("T", " ");
+
+        // ---- particulars ----
+        var html = section("CASE PARTICULARS", kv([
+            ["Case number", c.case_no],
+            ["FIR number", c.fir_number],
+            ["Classification", c.title],
+            ["Registered", when],
+            ["Officer", c.officer],
+            ["Intake mode", (c.mode || "").toUpperCase()]
+        ]));
+
+        // ---- structured form fields (agar form se aaya tha) ----
+        var form = c.form || {};
+        var filled = Object.keys(form).filter(function (k) { return form[k] && k !== "narrative"; });
+        if (filled.length) {
+            html += section("STRUCTURED PARTICULARS", kv(filled.map(function (k) {
+                return [k.replace(/_/g, " ").toUpperCase(), form[k]];
+            })));
+        }
+
+        // ---- narrative ----
+        html += section("STATEMENT OF THE INFORMANT",
+            '<div class="text-[11px] font-mono text-on-surface leading-relaxed whitespace-pre-wrap bg-surface-container-lowest border border-outline-variant/50 p-4">'
+            + esc(c.narrative || "") + '</div>');
+
+        // ---- entities ----
+        var chipHtml = Object.keys(CHIP).map(function (k) { return chips(e[k], CHIP[k]); }).join("");
+        html += section("ENTITIES EXTRACTED", chipHtml || '<div class="text-[11px] font-mono text-outline-variant">Nothing extracted.</div>');
+
+        // ---- inferred links ----
+        var rels = e.relationships || [], owns = e.ownership || [];
+        if (rels.length || owns.length) {
+            html += section("LINKS INFERRED",
+                rels.map(function (r) {
+                    return '<div class="text-[11px] font-mono text-on-surface-variant py-0.5">'
+                        + '<span class="text-white">' + esc(r.person_a) + '</span> &mdash; <i>' + esc(r.type)
+                        + '</i> &mdash; <span class="text-white">' + esc(r.person_b) + '</span></div>';
+                }).join("")
+                + owns.map(function (o) {
+                    return '<div class="text-[11px] font-mono text-on-surface-variant py-0.5">'
+                        + '<span class="text-white">' + esc(o.person) + '</span> &mdash; '
+                        + (o.type === "OWNS_PHONE" ? "registered SIM" : "bank account")
+                        + ' &mdash; <span class="text-white">' + esc(o.value) + '</span></div>';
+                }).join(""));
+        }
+
+        // ---- cross-match ----
+        var matches = c.matches || [];
+        html += section("CROSS-MATCH AGAINST CASE DATABASE",
+            matches.length
+                ? matches.map(function (m) {
+                    var prior = (m.prior_cases || []).map(function (p) { return p.case_no; }).join(", ");
+                    var where = [];
+                    if (m.in_graph) where.push("already in the live graph");
+                    if (prior) where.push("named in " + prior);
+                    return '<div class="text-[11px] font-mono py-0.5 text-error">&bull; <span class="text-white">'
+                        + esc(m.value) + '</span> <span class="text-outline-variant">(' + esc(m.kind) + ')</span> &mdash; '
+                        + esc(where.join("; ")) + '</div>';
+                  }).join("")
+                : '<div class="text-[11px] font-mono text-outline-variant">No subject matched an existing record.</div>');
+
+        // ---- evidence ----
+        var ev = c.evidence || [];
+        if (ev.length) {
+            html += section("ANNEXURE &mdash; EVIDENCE (" + ev.length + ")",
+                '<div class="flex flex-wrap gap-3">' + ev.map(function (x, i) {
+                    return '<div><div class="ev-thumb" onclick="krakenLightbox(\'' + esc(x.url) + '\')">'
+                        + '<img src="' + esc(x.url) + '" alt="' + esc(x.caption) + '"></div>'
+                        + '<div class="text-[8px] font-mono text-outline-variant mt-1 max-w-[84px] truncate">Exhibit '
+                        + (i + 1) + '</div></div>';
+                }).join("") + '</div>');
+        }
+
+        $("detail-body").innerHTML = html;
+        $("detail-title").innerText = c.case_no + (c.fir_number ? "  ·  FIR " + c.fir_number : "");
+    }
+
+    window.krakenLightbox = function (url) {
+        $("lightbox-img").src = url;
+        $("lightbox").classList.remove("hidden");
+        $("lightbox").classList.add("flex");
+    };
+
+    // ------------------------------------------------------------- print --
+    window.krakenPrintCase = function () {
+        var c = window.krakenCurrentCase;
+        if (!c) return;
+        var e = c.extracted || {};
+        var row = function (k, v) {
+            return v ? "<tr><th>" + esc(k) + "</th><td>" + esc(v) + "</td></tr>" : "";
+        };
+        var list = function (label, arr) {
+            return (arr && arr.length) ? row(label, arr.join(", ")) : "";
+        };
+        var doc = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(c.case_no) + ' &mdash; FIR</title>'
+            + '<style>'
+            + 'body{font-family:Georgia,"Times New Roman",serif;color:#111;max-width:760px;margin:32px auto;padding:0 24px;line-height:1.5}'
+            + 'h1{text-align:center;font-size:20px;letter-spacing:.06em;margin:0}'
+            + '.sub{text-align:center;font-size:10px;letter-spacing:.18em;color:#666;margin:4px 0 22px;text-transform:uppercase}'
+            + 'h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#00626e;margin:22px 0 6px;'
+            + 'border-bottom:1px solid #ccc;padding-bottom:4px}'
+            + 'table{width:100%;border-collapse:collapse;font-size:12px}'
+            + 'th{text-align:left;width:150px;font-weight:700;padding:3px 0;vertical-align:top}'
+            + 'td{padding:3px 0;vertical-align:top}'
+            + '.narr{white-space:pre-wrap;font-size:12px;border:1px solid #ddd;padding:12px;background:#fafafa}'
+            + '.hit{color:#8c1d18;font-size:12px;margin:2px 0}'
+            + 'img{max-width:100%;border:1px solid #ccc;margin-top:8px;page-break-inside:avoid}'
+            + '.cap{font-size:10px;font-style:italic;color:#666;margin-bottom:12px}'
+            + 'footer{margin-top:26px;border-top:1px solid #ccc;padding-top:8px;font-size:9px;color:#666}'
+            + '@media print{body{margin:0}}'
+            + '</style></head><body>'
+            + '<h1>FIRST INFORMATION REPORT</h1>'
+            + '<div class="sub">Kraken Intelligence Platform &middot; Case Record</div>'
+            + '<table>'
+            + row("Case number", c.case_no) + row("FIR number", c.fir_number)
+            + row("Classification", c.title) + row("Registered", (c.registered_at || "").replace("T", " "))
+            + row("Officer", c.officer) + row("Intake mode", (c.mode || "").toUpperCase())
+            + '</table>'
+            + '<h2>Statement of the informant</h2><div class="narr">' + esc(c.narrative || "") + '</div>'
+            + '<h2>Entities extracted</h2><table>'
+            + list("Persons", e.persons) + list("Phone numbers", e.phones)
+            + list("Bank accounts", e.accounts) + list("Locations", e.locations)
+            + list("Vehicles", e.vehicles) + list("Sections", e.sections)
+            + '</table>'
+            + '<h2>Cross-match</h2>'
+            + ((c.matches || []).length
+                ? (c.matches || []).map(function (m) {
+                    var prior = (m.prior_cases || []).map(function (p) { return p.case_no; }).join(", ");
+                    var w = [];
+                    if (m.in_graph) w.push("already in the live graph");
+                    if (prior) w.push("named in " + prior);
+                    return '<div class="hit">&bull; <b>' + esc(m.value) + '</b> (' + esc(m.kind) + ') &mdash; ' + esc(w.join("; ")) + '</div>';
+                  }).join("")
+                : '<div style="font-size:12px">No subject matched an existing record.</div>')
+            + ((c.evidence || []).length
+                ? '<h2>Annexure &mdash; evidence</h2>' + (c.evidence || []).map(function (x, i) {
+                    return '<img src="' + esc(x.url) + '"><div class="cap">Exhibit ' + (i + 1) + ' &mdash; ' + esc(x.caption) + '</div>';
+                  }).join("")
+                : "")
+            + '<footer>Generated by the KRAKEN intake console &mdash; not a substitute for the statutory FIR record. '
+            + 'Entities were extracted automatically; verify every machine-inferred link before acting on it.</footer>'
+            + '</body></html>';
+
+        var w = window.open("", "_blank");
+        if (!w) { alert("Allow pop-ups to print the case file."); return; }
+        w.document.write(doc);
+        w.document.close();
+        // Images load hone do, phir print dialog
+        w.onload = function () { w.focus(); w.print(); };
+        setTimeout(function () { try { w.focus(); w.print(); } catch (err) {} }, 900);
+    };
+
+    // -------------------------------------------------------------- boot --
+    async function load(selectFirst) {
+        try {
+            cases = (await api("/api/fir/cases")).cases || [];
+        } catch (err) {
+            $("case-roster").innerHTML = '<div class="p-6 text-[11px] font-mono text-error text-center">CASE INDEX UNAVAILABLE: '
+                + esc(err.message) + '</div>';
+            return;
+        }
+        renderRoster();
+        var wanted = new URLSearchParams(window.location.search).get("case");
+        if (wanted && cases.some(function (c) { return c.case_no === wanted; })) openCase(wanted);
+        else if (selectFirst && cases.length) openCase(cases[0].case_no);
+        else if (!cases.length) {
+            $("detail-body").innerHTML = '<div class="p-8 text-center text-[11px] font-mono text-outline-variant">'
+                + 'No case file selected.</div>';
+        }
+    }
+
+    $("case-search").addEventListener("input", renderRoster);
+    $("btn-new-fir").addEventListener("click", function () { window.location.href = "/intake"; });
+
+    $("btn-seed").addEventListener("click", async function () {
+        var btn = this;
+        var original = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> SEEDING';
+        try {
+            var res = await api("/api/fir/seed", { count: 12 });
+            if (window.krakenToast) {
+                window.krakenToast(res.seeded.length ? "CASE FILES BUILT" : "ALREADY POPULATED",
+                    res.message, res.seeded.length ? "info" : "warn");
+            }
+            await load(true);
+        } catch (err) {
+            if (window.krakenToast) window.krakenToast("SEED FAILED", err.message, "high");
+        } finally {
+            btn.innerHTML = original;
+        }
+    });
+
+    load(true);
+})();
+</script>
+<script src="/static/kraken_logout.js"></script>
+<script src="/static/kraken_header.js"></script>
+</body></html>

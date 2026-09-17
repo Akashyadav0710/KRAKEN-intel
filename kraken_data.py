@@ -417,6 +417,33 @@ def adamic_adar(graph, top=15, threshold=0.1):
 
     scored.sort(key=lambda row: (-row[0], row[1], row[2]))
 
+    # Confidence ko asli spread do.
+    #
+    # Pehle formula tha: min(99, (score/(score+2))*100 + 65). Wo score ~1.03
+    # par hi 99 pe chipak jaata tha, aur is dataset mein sabse kamzor pair ka
+    # score bhi 1.8 hai -- yaani SAARI predictions "99%" dikhti thi aur number
+    # ka koi matlab hi nahi bachta tha (bell ka "95%+ links" alert bhi hamesha
+    # poori list par chal jaata tha).
+    #
+    # Ab har candidate ko poore scored set ke against percentile rank milta
+    # hai, phir usko 60-99 band par map karte hain. Ranking ab dikhti hai:
+    # sabse strong pair hi 99 par pahunchta hai.
+    ranked = sorted(row[0] for row in scored)
+    span = len(ranked) - 1
+
+    def _confidence(value):
+        if span <= 0:
+            return 92.0
+        # kitne candidates is se kamzor hain
+        low, high = 0, len(ranked)
+        while low < high:                      # bisect_left, bina import ke
+            mid = (low + high) // 2
+            if ranked[mid] < value:
+                low = mid + 1
+            else:
+                high = mid
+        return round(60.0 + 39.0 * (low / float(span)), 1)
+
     predictions = []
     for score, u, v, common in scored[:top]:
         shared = sorted(common, key=lambda n: -degree.get(n, 0))
@@ -437,7 +464,7 @@ def adamic_adar(graph, top=15, threshold=0.1):
         predictions.append({
             "source": u,
             "target": v,
-            "confidence": round(min(99.0, (score / (score + 2)) * 100 + 65), 1),
+            "confidence": _confidence(score),
             "reasoning": "%d shared node%s (%s): %s" % (
                 len(common), "" if len(common) == 1 else "s",
                 why or "network overlap", ", ".join(shared[:3])),
@@ -1369,24 +1396,49 @@ def shortest_path(start, end, include_devices=True, tower_min=DEFAULT_TOWER_MIN)
     adj = _full_adjacency(g, tower_min=tower_min, include_devices=include_devices)
 
     from collections import deque
-    distance = {src: 0}
-    strength = {src: 0.0}
-    parent = {}
-    queue = deque([src])
 
+    # Do phase mein karna padta hai.
+    #
+    # Pehle ek hi BFS loop tha jo dequeue ho chuke node ki strength baad mein
+    # sudhaar deta tha -- lekin us node ke aage wale already uski purani
+    # (kamzor) strength se ban chuke hote the, aur unhe kabhi update nahi
+    # milta tha. Matlab "utne hi hops mein sabse strong chain" sirf locally
+    # sahi thi, poore raaste ke liye nahi.
+    #
+    # Ab: (1) BFS se sirf hop distance, (2) phir distance ke badhte order mein
+    # strength maximize karo. Distance d par pahunchne se pehle d-1 ki saari
+    # strengths final ho chuki hoti hain, isliye choice hamesha sahi hai.
+
+    # -- phase 1: minimum hops
+    distance = {src: 0}
+    queue = deque([src])
     while queue:
         current = queue.popleft()
-        for neighbour, kind, weight, detail in adj.get(current, ()):
-            step = distance[current] + 1
+        for neighbour, _kind, _weight, _detail in adj.get(current, ()):
             if neighbour not in distance:
-                distance[neighbour] = step
-                strength[neighbour] = strength[current] + weight
-                parent[neighbour] = (current, kind, weight, detail)
+                distance[neighbour] = distance[current] + 1
                 queue.append(neighbour)
-            elif distance[neighbour] == step and strength[current] + weight > strength[neighbour]:
-                # Utne hi hops, lekin stronger evidence -> wahi raasta behtar hai
-                strength[neighbour] = strength[current] + weight
-                parent[neighbour] = (current, kind, weight, detail)
+
+    # -- phase 2: utne hi hops mein sabse strong evidence chain
+    strength = {src: 0.0}
+    parent = {}
+    for node in sorted(distance, key=lambda n: (distance[n], str(n))):
+        if node == src:
+            continue
+        previous_step = distance[node] - 1
+        best = None
+        for neighbour, kind, weight, detail in adj.get(node, ()):
+            if distance.get(neighbour) != previous_step or neighbour not in strength:
+                continue
+            total = strength[neighbour] + weight
+            # tie par naam se todo taaki answer har baar wahi rahe
+            key = (total, str(neighbour))
+            if best is None or key > best[0]:
+                best = (key, total, (neighbour, kind, weight, detail))
+        if best is None:
+            continue
+        strength[node] = best[1]
+        parent[node] = best[2]
 
     if dst not in distance:
         return {"found": False, "error": "No evidence chain connects %s and %s." % (src, dst),

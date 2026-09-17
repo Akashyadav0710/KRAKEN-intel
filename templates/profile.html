@@ -20,7 +20,7 @@
                       "primary-fixed-dim": "#00dbe9", "outline": "#849495", "surface-container": "#1b2028",
                       "surface-container-low": "#171c24", "secondary-container": "#feb700",
                       "error-container": "#93000a", "background": "#0f141b", "primary": "#dbfcff",
-                      "primary-fixed": "#7df4ff", "surface": "#0f141b"
+                      "primary-fixed": "#7df4ff", "surface": "#0f141b", "on-surface": "#dee2ee"
               },
               "spacing": { "unit": "4px", "gutter": "16px" },
               "fontFamily": { "status-sm": ["JetBrains Mono"], "data-mono": ["JetBrains Mono"], "label-caps": ["JetBrains Mono"] }
@@ -77,6 +77,7 @@
         <a href="/intake" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">upload_file</span>Intake</a>
         <a href="/profile" class="flex items-center gap-3 px-4 py-3 bg-surface-container-highest border-l-4 border-primary text-primary"><span class="material-symbols-outlined text-[18px]">person_search</span>Profiles</a>
         <a href="/reports" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">description</span>Reports</a>
+        <a href="/cases" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">folder_open</span>Case Files</a>
     </div>
 </nav>
 
@@ -100,9 +101,16 @@
             
             <!-- Header -->
             <div class="bg-surface border border-outline-variant flex items-center p-6 gap-6 relative overflow-hidden shrink-0">
-                <div class="w-24 h-24 border-2 border-error bg-[#171c24] flex justify-center items-center shrink-0 relative" id="ui-avatar-border">
+                <div class="w-24 h-24 border-2 border-error bg-[#171c24] flex justify-center items-center shrink-0 relative cursor-pointer group/av"
+                     id="ui-avatar-border" tabindex="0" title="Click or paste (Ctrl+V) to set this subject's photo">
                     <span class="material-symbols-outlined text-error text-[64px] opacity-80 flicker" id="ui-avatar-icon">person</span>
+                    <img id="ui-avatar-photo" class="hidden absolute inset-0 w-full h-full object-cover" alt="Subject photograph">
+                    <div class="absolute inset-0 bg-black/70 opacity-0 group-hover/av:opacity-100 transition-opacity flex flex-col items-center justify-center gap-0.5 pointer-events-none">
+                        <span class="material-symbols-outlined text-primary-container text-[20px]">add_a_photo</span>
+                        <span class="text-[7px] font-mono text-primary-container tracking-widest text-center leading-tight">CLICK OR<br>PASTE</span>
+                    </div>
                 </div>
+                <input id="ui-avatar-file" type="file" accept="image/*" class="hidden">
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-1">
                         <span class="text-error border border-error bg-error-container/10 px-2 py-0.5 text-[10px] font-mono tracking-widest" id="ui-badge">HIGH VALUE TARGET</span>
@@ -126,35 +134,48 @@
             </div>
 
             <!-- Grid -->
-            <div class="grid grid-cols-12 gap-6">
-                <!-- CDR Table -->
-                <div class="col-span-12 lg:col-span-6 bg-surface border border-outline-variant flex flex-col h-[400px]">
-                    <div class="bg-surface-container px-4 py-2 border-b border-outline-variant flex items-center gap-2 shrink-0">
-                        <span class="material-symbols-outlined text-[16px] text-secondary-fixed">cell_tower</span>
-                        <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">LIVE CDR INTERCEPTS</span>
+            <div class="grid grid-cols-12 gap-6 lg:h-[604px]">
+                <!-- CDR + Financials -->
+                <div class="col-span-12 lg:col-span-6 flex flex-col gap-6 min-h-0">
+                    <div class="bg-surface border border-outline-variant flex flex-col flex-1 min-h-[400px]">
+                        <div class="bg-surface-container px-4 py-2 border-b border-outline-variant flex items-center gap-2 shrink-0">
+                            <span class="material-symbols-outlined text-[16px] text-secondary-fixed">cell_tower</span>
+                            <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">LIVE CDR INTERCEPTS</span>
+                        </div>
+                        <div class="flex-1 min-h-0 overflow-y-auto">
+                            <table class="w-full text-left text-[11px] font-mono">
+                                <thead class="bg-surface-container-low text-outline-variant sticky top-0 z-10">
+                                    <tr><th class="p-3 font-normal">CALLER</th><th class="p-3 font-normal">RECEIVER / FREQ</th><th class="p-3 font-normal">TOWER LOC & DUR</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-outline-variant/30 text-on-surface" id="ui-cdr">
+                                    <!-- Data Injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="flex-1 overflow-y-auto">
-                        <table class="w-full text-left text-[11px] font-mono">
-                            <thead class="bg-surface-container-low text-outline-variant sticky top-0 z-10">
-                                <tr><th class="p-3 font-normal">CALLER</th><th class="p-3 font-normal">RECEIVER / FREQ</th><th class="p-3 font-normal">TOWER LOC & DUR</th></tr>
-                            </thead>
-                            <tbody class="divide-y divide-outline-variant/30 text-on-surface" id="ui-cdr">
-                                <!-- Data Injected dynamically -->
-                            </tbody>
-                        </table>
+
+                    <!-- Financials -->
+                    <div class="bg-surface border border-outline-variant flex flex-col h-[180px] shrink-0">
+                        <div class="bg-surface-container px-4 py-2 border-b border-outline-variant flex items-center gap-2 shrink-0">
+                            <span class="material-symbols-outlined text-[16px] text-primary">account_balance</span>
+                            <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">LINKED TRANSACTIONS</span>
+                        </div>
+                        <div class="flex-1 min-h-0 p-4 overflow-y-auto" id="ui-trans">
+                            <!-- Data injected dynamically -->
+                        </div>
                     </div>
                 </div>
 
                 <!-- Radar & Trans -->
-                <div class="col-span-12 lg:col-span-6 flex flex-col gap-6">
+                <div class="col-span-12 lg:col-span-6 flex flex-col gap-6 min-h-0">
                     <!-- ASSOCIATION RADAR: har blip ek asli associate hai.
                          Center = target. Andar wala = strongest link. Sector = evidence type. -->
                     <div class="bg-surface border border-outline-variant h-80 flex flex-col relative overflow-hidden shrink-0">
-                        <div class="absolute top-3 left-4 z-20 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-[16px] text-primary-container">my_location</span>
-                            <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase" id="ui-loc">Tracking Node...</span>
+                        <div class="absolute top-3 left-4 right-4 z-20 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[16px] text-primary-container shrink-0">my_location</span>
+                            <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase truncate min-w-0 flex-1" id="ui-loc">Tracking Node...</span>
+                            <span class="text-[9px] font-mono text-outline-variant tracking-widest shrink-0 whitespace-nowrap" id="ui-radar-count"></span>
                         </div>
-                        <div class="absolute top-3 right-4 z-20 text-[9px] font-mono text-outline-variant tracking-widest" id="ui-radar-count"></div>
 
                         <div class="flex-1 bg-[#090e16] relative flex items-center justify-center">
                             <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MCcgaGVpZ2h0PSc0MCc+PHBhdGggZD0nTSA0MCAwIEwgMCAwIDAgNDAnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzI1MkQzQScgc3Ryb2tlLXdpZHRoPScxJy8+PC9zdmc+')]"></div>
@@ -176,7 +197,7 @@
                     </div>
 
                     <!-- UNDER SURVEILLANCE: naam + exactly kis evidence par link hai -->
-                    <div class="bg-surface border border-outline-variant flex flex-col h-[260px] shrink-0">
+                    <div class="bg-surface border border-outline-variant flex flex-col flex-1 min-h-[260px]">
                         <div class="bg-surface-container px-4 py-2 border-b border-outline-variant flex items-center justify-between gap-2 shrink-0">
                             <div class="flex items-center gap-2">
                                 <span class="material-symbols-outlined text-[16px] text-error">visibility</span>
@@ -184,18 +205,7 @@
                             </div>
                             <span class="text-[10px] font-mono text-outline-variant" id="ui-watch-count">--</span>
                         </div>
-                        <div class="flex-1 overflow-y-auto divide-y divide-outline-variant/20" id="ui-watchlist"></div>
-                    </div>
-
-                    <!-- Financials -->
-                    <div class="bg-surface border border-outline-variant flex-1 flex flex-col h-[184px]">
-                        <div class="bg-surface-container px-4 py-2 border-b border-outline-variant flex items-center gap-2 shrink-0">
-                            <span class="material-symbols-outlined text-[16px] text-primary">account_balance</span>
-                            <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">LINKED TRANSACTIONS</span>
-                        </div>
-                        <div class="flex-1 p-4 overflow-y-auto" id="ui-trans">
-                            <!-- Data injected dynamically -->
-                        </div>
+                        <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-outline-variant/20" id="ui-watchlist"></div>
                     </div>
                 </div>
             </div>
@@ -363,7 +373,9 @@
         
         document.getElementById('ui-badge').className = `text-${t.color} border border-${t.color} bg-${t.color}/10 px-2 py-0.5 text-[10px] font-mono tracking-widest`;
         document.getElementById('ui-badge').innerText = t.badge;
-        document.getElementById('ui-avatar-border').className = `w-24 h-24 border-2 border-${t.color} bg-[#171c24] flex justify-center items-center shrink-0 relative`;
+        document.getElementById('ui-avatar-border').className = `w-24 h-24 border-2 border-${t.color} bg-[#171c24] flex justify-center items-center shrink-0 relative cursor-pointer group/av`;
+        window.krakenPhotoSubject = t.name;
+        loadSubjectPhoto(t.name);
         document.getElementById('ui-avatar-icon').className = `material-symbols-outlined text-${t.color} text-[64px] opacity-80 flicker`;
         document.getElementById('ui-score').className = `absolute text-[16px] font-mono font-bold text-${t.color}`;
         document.getElementById('ui-ring').className = `text-${t.color}`;
@@ -470,7 +482,7 @@
         }
 
         const shown = all.slice(0, RADAR_LIMIT);
-        countEl.innerText = `${shown.length} OF ${all.length} ASSOCIATES`;
+        countEl.innerText = `${shown.length}/${all.length} LINKED`;
 
         // Sector ke hisaab se group -> ek hi evidence type wale ek arc mein
         const buckets = {};
@@ -483,6 +495,19 @@
         const minWeight = Math.min(...shown.map(a => a.weight));
         const span = Math.max(1, maxWeight - minWeight);
         let html = '';
+
+        // Label collision avoidance -- rakhe ja chuke labels ke boxes.
+        const placedLabels = [];
+        const placeLabel = (x, y, name) => {
+            const w = Math.min(name.length * 4.4, 92), h = 9;
+            for (const c of [{ dy: 11, cls: 'mt-1' }, { dy: -13, cls: 'order-first mb-1' }]) {
+                const box = { x1: x - w / 2, x2: x + w / 2, y1: y + c.dy - h / 2, y2: y + c.dy + h / 2 };
+                const hit = placedLabels.some(p =>
+                    !(box.x2 < p.x1 || box.x1 > p.x2 || box.y2 < p.y1 || box.y1 > p.y2));
+                if (!hit) { placedLabels.push(box); return c.cls; }
+            }
+            return null;   // bahut bheed -- sirf hover par dikhao
+        };
 
         EVIDENCE_ORDER.forEach(kind => {
             const members = buckets[kind] || [];
@@ -500,16 +525,20 @@
                 const y = Math.round(Math.sin(rad) * radius);
                 const strong = a.weight >= maxWeight;
                 const tip = `${a.name} — ${a.reason}`.replace(/"/g, '&quot;');
+                const side = placeLabel(x, y, a.name);
+                const labelCls = side
+                    ? side
+                    : 'mt-1 opacity-0 group-hover:opacity-100 transition-opacity';
 
                 html += `
-                    <div class="absolute flex flex-col items-center cursor-pointer group"
+                    <div class="absolute flex flex-col items-center cursor-pointer group hover:z-30"
                          style="left: calc(50% + ${x}px); top: calc(50% + ${y}px); transform: translate(-50%, -50%);"
                          title="${tip}" onclick="focusTarget('${a.name.replace(/'/g, "\\'")}')">
                         <div class="relative flex items-center justify-center">
                             ${strong ? `<span class="absolute w-3 h-3 rounded-full bg-${meta.color} opacity-60 animate-ping"></span>` : ''}
                             <span class="w-2 h-2 rounded-full bg-${meta.color} shadow-[0_0_6px_currentColor] text-${meta.color}"></span>
                         </div>
-                        <span class="mt-1 text-[8px] font-mono text-on-surface-variant group-hover:text-${meta.color} whitespace-nowrap max-w-[92px] truncate">${a.name}</span>
+                        <span class="${labelCls} text-[8px] font-mono text-on-surface-variant group-hover:text-${meta.color} whitespace-nowrap max-w-[92px] truncate">${a.name}</span>
                     </div>`;
             });
         });
@@ -649,6 +678,84 @@
     }
 
     document.addEventListener("DOMContentLoaded", initProfiles);
+</script>
+<script>
+// ==========================================================
+// SUBJECT PHOTOGRAPH -- avatar par click ya paste
+// Photo server par jaati hai (case_files/photos) isliye har operator ko
+// dikhti hai, sirf is browser ko nahi.
+// ==========================================================
+(function () {
+    "use strict";
+    var border = document.getElementById('ui-avatar-border');
+    var picker = document.getElementById('ui-avatar-file');
+    var photo  = document.getElementById('ui-avatar-photo');
+    var icon   = document.getElementById('ui-avatar-icon');
+    if (!border || !picker) return;
+
+    function show(url) {
+        if (url) {
+            photo.src = url + '?t=' + Date.now();   // cache bust
+            photo.classList.remove('hidden');
+            icon.classList.add('hidden');
+        } else {
+            photo.removeAttribute('src');
+            photo.classList.add('hidden');
+            icon.classList.remove('hidden');
+        }
+    }
+
+    window.loadSubjectPhoto = function (name) {
+        show(null);
+        if (!name) return;
+        fetch('/api/person-photos?name=' + encodeURIComponent(name), { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) { if (d && d.photo) show(d.photo.url); })
+            .catch(function () {});
+    };
+
+    function upload(file) {
+        var name = window.krakenPhotoSubject;
+        if (!name) return;
+        if (!file || file.type.indexOf('image/') !== 0) return;
+        if (file.size > 6 * 1024 * 1024) {
+            if (window.krakenToast) window.krakenToast('PHOTO REJECTED', 'Image is over the 6 MB limit.', 'high');
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            fetch('/api/person-photo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name, image: { type: file.type, data: e.target.result } })
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                if (d.status === 'success') {
+                    show(d.url);
+                    if (window.krakenToast) window.krakenToast('PHOTO ON FILE', name + ' — subject photograph attached.', 'info');
+                } else if (window.krakenToast) {
+                    window.krakenToast('PHOTO REJECTED', d.message || 'Upload failed.', 'high');
+                }
+            }).catch(function () {});
+        };
+        reader.readAsDataURL(file);
+    }
+
+    border.addEventListener('click', function () { picker.click(); });
+    picker.addEventListener('change', function (e) { upload(e.target.files[0]); e.target.value = ''; });
+
+    // Kahin bhi paste karo -- dossier khula ho to photo lag jaati hai.
+    document.addEventListener('paste', function (e) {
+        if (!window.krakenPhotoSubject) return;
+        var items = (e.clipboardData || {}).items || [];
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].kind === 'file' && items[i].type.indexOf('image/') === 0) {
+                e.preventDefault();
+                upload(items[i].getAsFile());
+                return;
+            }
+        }
+    });
+})();
 </script>
 <script src="/static/kraken_logout.js"></script>
 <script src="/static/kraken_header.js"></script>

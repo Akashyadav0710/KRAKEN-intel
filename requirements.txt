@@ -11,3 +11,9 @@
 
 Flask
 gunicorn
+
+# FIR intake console: entity extraction + generated case PDFs.
+#   ./venv/bin/python -m spacy download en_core_web_sm
+spacy
+reportlab
+Pillow

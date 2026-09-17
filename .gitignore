@@ -1,3 +1,7 @@
 venv/
 kraken_state.json
 kraken_state.json.tmp
+
+# Registered FIRs, evidence images, subject photos and generated PDFs.
+# Runtime case data -- rebuilt as officers file reports.
+case_files/

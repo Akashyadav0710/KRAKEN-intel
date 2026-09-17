@@ -46,7 +46,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
 </style>
 </head>
-<body class="bg-background text-on-background min-h-screen flex flex-col font-body-base overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<body class="bg-background text-on-background h-screen flex flex-col font-body-base overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
 <div class="fixed inset-0 scan-line z-50 pointer-events-none mix-blend-screen opacity-50"></div>
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-16 bg-surface/90 backdrop-blur-md border-b border-outline-variant text-primary">
@@ -99,6 +99,7 @@
         
         <a href="/profile" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">person_search</span><span class="tracking-widest">Profiles</span></a>
         <a href="/reports" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">description</span><span class="tracking-widest">Reports</span></a>
+        <a href="/cases" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">folder_open</span><span class="tracking-widest">Case Files</span></a>
     </div>
     
     <div class="p-4 border-t border-outline-variant/50 flex flex-col gap-3">
@@ -111,445 +112,822 @@
 </nav>
 
 <main class="ml-64 mt-16 p-unit flex-1 h-[calc(100vh-64px)] bg-background overflow-hidden">
-    <div class="h-full grid grid-cols-12 gap-unit p-2">
-        
-        <!-- Upload Form -->
-        <div class="col-span-12 lg:col-span-7 bg-surface border border-outline-variant flex flex-col h-full overflow-hidden">
-            <div class="bg-surface-container px-4 py-3 border-b border-outline-variant flex items-center gap-2 shrink-0">
-                <span class="material-symbols-outlined text-[18px] text-primary-container">file_upload</span>
-                <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Raw Intel & FIR Intake</span>
-            </div>
-            
-            <div class="p-4 flex-1 flex flex-col space-y-4 overflow-y-auto">
-                <div class="text-[11px] font-mono text-on-surface-variant leading-relaxed">
-                    Upload unstructured text (FIRs, Interrogation transcripts). The Kraken NLP Engine will extract entities (Names, Phones, Accounts).
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4 shrink-0">
-                    <div>
-                        <label class="text-[11px] font-mono text-outline-variant block mb-1">SOURCE TYPE</label>
-                        <select class="w-full bg-surface-container-low border border-outline-variant text-[13px] font-mono text-on-surface p-2 focus:border-primary-container outline-none appearance-none">
-                            <option>FIR Report (Police)</option>
-                            <option>Call Detail Record (CDR) Summary</option>
-                            <option>Field Agent Notes</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-mono text-outline-variant block mb-1">CASE ID</label>
-                        <input type="text" class="w-full bg-surface-container-low border border-outline-variant text-[13px] font-mono text-primary p-2 focus:border-primary-container outline-none" value="CASE-992-ALPHA">
-                    </div>
-                </div>
+    <div class="h-full grid grid-cols-12 grid-rows-[minmax(0,1fr)] gap-unit p-2">
 
-                <div class="flex-1 flex flex-col glow-border transition-colors border border-outline-variant relative min-h-[250px]">
-                    <label class="absolute top-2 left-2 text-[11px] font-mono text-outline-variant pointer-events-none">RAW TEXT CONTENT</label>
-                    <textarea id="intel-input" class="w-full h-full bg-surface-container-lowest text-[13px] font-mono text-on-surface p-4 pt-8 resize-none outline-none border-none focus:ring-0" placeholder="Paste intelligence text here..."></textarea>
-                </div>
+    <!-- ============================ LEFT: FIR REGISTRATION ============================ -->
+    <div class="col-span-12 lg:col-span-7 bg-surface border border-outline-variant flex flex-col h-full min-h-0 overflow-hidden">
+
+        <div class="bg-surface-container px-4 py-3 border-b border-outline-variant flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px] text-primary-container">assignment_add</span>
+                <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Register FIR</span>
             </div>
-            
-            <div class="p-4 bg-surface-container border-t border-outline-variant flex justify-between items-center shrink-0">
-                <div class="flex items-center gap-2 text-[10px] font-mono text-outline-variant">
-                    <span class="material-symbols-outlined text-[16px]">lock</span> 256-Bit Encrypted Transfer
+            <div class="flex items-center gap-0">
+                <button id="tab-passage" data-mode="passage" class="mode-tab text-[10px] font-mono tracking-widest px-3 py-1 border border-primary-container bg-primary-container text-[#00363a] transition-colors">PASSAGE</button>
+                <button id="tab-form" data-mode="form" class="mode-tab text-[10px] font-mono tracking-widest px-3 py-1 border border-l-0 border-outline-variant text-on-surface-variant hover:text-primary-container transition-colors">FORM</button>
+            </div>
+        </div>
+
+        <div class="p-4 flex-1 flex flex-col gap-3 overflow-y-auto min-h-0">
+
+            <div class="text-[11px] font-mono text-on-surface-variant leading-relaxed shrink-0">
+                Write the complaint as one passage, or switch to <b class="text-primary-container">FORM</b> for structured fields.
+                On registration the NER engine extracts every subject, SIM, account and location, opens a case file,
+                builds the profiles, merges them into the network and generates the case PDF.
+            </div>
+
+            <!-- ---------- PASSAGE MODE ---------- -->
+            <div id="pane-passage" class="flex-1 flex flex-col min-h-[200px]">
+                <div class="relative flex-1 border border-outline-variant bg-surface-container-lowest glow-border transition-all flex flex-col">
+                    <div class="absolute top-2 left-3 text-[9px] font-mono text-outline-variant tracking-widest pointer-events-none z-10">FIR / COMPLAINT NARRATIVE</div>
+                    <textarea id="fir-narrative" spellcheck="false"
+                        class="w-full flex-1 bg-transparent text-[12px] font-mono text-on-surface p-4 pt-8 resize-none outline-none border-none focus:ring-0 leading-relaxed"
+                        placeholder="FIR No. 1043/2026&#10;Police Station: Berhampore, District: Murshidabad, Date of Offence: 14/03/2026.&#10;&#10;Complainant Anil Verma, contact +919812345670, residing at 22 Station Road, Berhampore, states that Rajesh Kumar, along with Suresh Mehta, defrauded him of Rs. 4,50,000 through a fake investment scheme. Rajesh Kumar operates contact 9876543210 and account no. 123456789012. Suresh Mehta received the funds in account XXXX4421. A vehicle WB 24 AB 1234 was used. Offence registered under Section 420, 406 IPC."></textarea>
                 </div>
-                <button id="btn-process" class="bg-primary-container text-[#00363a] text-[11px] font-mono font-bold px-6 py-2 hover:bg-transparent hover:text-primary-container border border-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)] flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[18px]">memory</span> EXTRACT ENTITIES
+                <button id="btn-sample" class="mt-2 self-start text-[9px] font-mono text-outline-variant hover:text-primary-container transition-colors tracking-widest">&rsaquo; LOAD SAMPLE FIR</button>
+            </div>
+
+            <!-- ---------- FORM MODE ---------- -->
+            <div id="pane-form" class="hidden flex-1 flex-col gap-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">FIR NUMBER</label>
+                        <input id="f-fir_number" type="text" placeholder="1043/2026" class="fld"></div>
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">DATE OF OFFENCE</label>
+                        <input id="f-incident_date" type="text" placeholder="14/03/2026" class="fld"></div>
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">POLICE STATION</label>
+                        <input id="f-police_station" type="text" placeholder="Berhampore" class="fld"></div>
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">DISTRICT</label>
+                        <input id="f-district" type="text" placeholder="Murshidabad" class="fld"></div>
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">COMPLAINANT</label>
+                        <input id="f-complainant" type="text" placeholder="Anil Verma" class="fld"></div>
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">COMPLAINANT CONTACT</label>
+                        <input id="f-complainant_phone" type="text" placeholder="+919812345670" class="fld"></div>
+                </div>
+                <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">ACCUSED &mdash; one per line, or comma separated</label>
+                    <textarea id="f-accused" rows="2" placeholder="Rajesh Kumar, Suresh Mehta" class="fld resize-none"></textarea></div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">PHONES</label>
+                        <input id="f-phones" type="text" placeholder="9876543210, 9812345670" class="fld"></div>
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">ACCOUNTS</label>
+                        <input id="f-accounts" type="text" placeholder="XXXX4421" class="fld"></div>
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">VEHICLES</label>
+                        <input id="f-vehicles" type="text" placeholder="WB 24 AB 1234" class="fld"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2"><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">NATURE OF OFFENCE</label>
+                        <input id="f-offence" type="text" placeholder="Investment fraud" class="fld"></div>
+                    <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">IPC SECTIONS</label>
+                        <input id="f-sections" type="text" placeholder="420, 406" class="fld"></div>
+                </div>
+                <div><label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">PLACE OF OCCURRENCE</label>
+                    <input id="f-location" type="text" placeholder="Kolkata" class="fld"></div>
+                <div class="flex-1 flex flex-col min-h-[90px]">
+                    <label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">STATEMENT / ADDITIONAL DETAIL</label>
+                    <textarea id="f-narrative" placeholder="Anything else the informant stated..." class="fld flex-1 resize-none"></textarea></div>
+            </div>
+
+        </div>
+
+        <!-- Footer: scroll ke bahar, isliye hamesha reachable -->
+        <div class="shrink-0 border-t border-outline-variant/50 bg-surface-container-low p-4 space-y-3">
+            <!-- ---------- EVIDENCE ---------- -->
+            <div class="shrink-0">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="text-[9px] font-mono text-outline-variant tracking-widest">EVIDENCE &mdash; photos, screenshots, scanned documents</label>
+                    <span class="text-[9px] font-mono text-outline-variant" id="ev-count">0 attached</span>
+                </div>
+                <div id="ev-drop" tabindex="0"
+                     class="border border-dashed border-outline-variant hover:border-primary-container focus:border-primary-container outline-none cursor-pointer transition-colors bg-surface-container-lowest px-4 py-3 flex items-center justify-center gap-2 text-center">
+                    <span class="material-symbols-outlined text-[18px] text-outline-variant">add_photo_alternate</span>
+                    <span class="text-[10px] font-mono text-outline-variant tracking-widest">CLICK, DROP, OR PASTE (&#8984;V / CTRL+V) TO ATTACH IMAGE</span>
+                </div>
+                <input id="ev-file" type="file" accept="image/*" multiple class="hidden">
+                <div id="ev-thumbs" class="flex flex-wrap gap-2 mt-2"></div>
+            </div>
+
+            <!-- ---------- ACTIONS ---------- -->
+            <div class="flex items-center gap-3 shrink-0 pt-1 border-t border-outline-variant/40">
+                <div class="flex-1">
+                    <label class="text-[9px] font-mono text-outline-variant block mb-1 tracking-widest">REGISTERING OFFICER</label>
+                    <input id="fir-officer" type="text" placeholder="SI D. BOSE" class="fld">
+                </div>
+                <button id="btn-analyse" class="mt-4 bg-transparent text-primary-container text-[10px] font-mono font-bold px-4 py-2 border border-primary-container/60 hover:bg-primary-container/10 transition-colors flex items-center gap-2 shrink-0">
+                    <span class="material-symbols-outlined text-[16px]">frame_inspect</span> ANALYSE
+                </button>
+                <button id="btn-register" class="mt-4 bg-primary-container text-[#00363a] text-[10px] font-mono font-bold px-5 py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors shadow-[0_0_10px_rgba(0,240,255,0.2)] flex items-center gap-2 shrink-0">
+                    <span class="material-symbols-outlined text-[16px]">gavel</span> REGISTER FIR
                 </button>
             </div>
         </div>
+    </div>
 
-        <!-- Live NLP Terminal + Graph Ledger -->
-        <div class="col-span-12 lg:col-span-5 flex flex-col h-full gap-unit overflow-hidden">
+    <!-- ============================ RIGHT: OUTPUT ============================ -->
+    <div class="col-span-12 lg:col-span-5 flex flex-col h-full min-h-0 gap-unit overflow-hidden">
 
-            <div class="bg-[#0a0d12] border border-outline-variant flex flex-col relative overflow-hidden" style="flex: 1 1 45%; min-height: 180px;">
-                <div class="bg-[#171c24] px-4 py-3 border-b border-outline-variant flex items-center justify-between shrink-0">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[18px] text-secondary-fixed">terminal</span>
-                        <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Kraken NLP PROCESSOR</span>
-                    </div>
-                    <div class="w-2 h-2 rounded-full bg-secondary-fixed animate-pulse hidden" id="processing-dot"></div>
-                </div>
+        <!-- tabs -->
+        <div class="bg-surface border border-outline-variant flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div class="bg-surface-container border-b border-outline-variant flex items-stretch shrink-0">
+                <button data-panel="extract" class="panel-tab flex-1 text-[10px] font-mono tracking-widest px-2 py-3 text-primary-container border-b-2 border-primary-container transition-colors">EXTRACTION</button>
+                <button data-panel="cases"   class="panel-tab flex-1 text-[10px] font-mono tracking-widest px-2 py-3 text-on-surface-variant border-b-2 border-transparent hover:text-primary-container transition-colors">CASE FILES</button>
+                <button data-panel="ledger"  class="panel-tab flex-1 text-[10px] font-mono tracking-widest px-2 py-3 text-on-surface-variant border-b-2 border-transparent hover:text-primary-container transition-colors">LEDGER</button>
+            </div>
 
-                <div id="terminal-output" class="p-4 flex-1 overflow-y-auto font-mono text-[12px] text-on-surface-variant leading-relaxed space-y-2">
-                    <div>[SYS] Kraken NLP Engine ready.</div>
-                    <div>[SYS] Awaiting unstructured input stream...</div>
-                    <div class="flex items-center gap-2 mt-2 text-primary-container" id="terminal-cursor">
-                        <span>_</span><span class="animate-pulse">█</span>
-                    </div>
+            <!-- ---------- EXTRACTION PANEL ---------- -->
+            <div id="panel-extract" class="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div id="extract-body" class="flex-1 min-h-0 overflow-y-auto p-4 space-y-3"></div>
+                <div id="terminal-output" class="border-t border-outline-variant bg-surface-container-lowest p-3 h-32 overflow-y-auto font-mono text-[11px] text-on-surface-variant leading-relaxed space-y-1 shrink-0">
+                    <div class="text-outline-variant">[SYS] KRAKEN NER ENGINE v4.0 &mdash; standing by.</div>
+                    <div class="flex items-center gap-2 text-primary-container" id="terminal-cursor"><span>_</span><span class="animate-pulse">&#9608;</span></div>
                 </div>
             </div>
 
-            <!-- GRAPH LEDGER: add / remove / restore, sab live -->
-            <div class="bg-surface border border-outline-variant flex flex-col overflow-hidden" style="flex: 1 1 55%; min-height: 220px;">
-                <div class="bg-surface-container px-4 py-3 border-b border-outline-variant flex items-center justify-between shrink-0">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[18px] text-primary-container">edit_note</span>
-                        <span class="text-[11px] font-mono tracking-widest text-on-surface uppercase">Live Graph Ledger</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-mono text-outline-variant" id="ledger-counts">--</span>
+            <!-- ---------- CASE FILES PANEL ---------- -->
+            <div id="panel-cases" class="hidden flex-1 flex-col min-h-0 overflow-hidden">
+                <div class="px-3 py-2 bg-surface-container-low border-b border-outline-variant/40 flex justify-between items-center shrink-0">
+                    <span class="text-[10px] font-mono text-primary-container tracking-widest">REGISTERED CASES</span>
+                    <span class="text-[9px] font-mono text-outline-variant" id="cases-count">--</span>
+                </div>
+                <div id="cases-body" class="flex-1 min-h-0 overflow-y-auto"></div>
+            </div>
+
+            <!-- ---------- LEDGER PANEL ---------- -->
+            <div id="panel-ledger" class="hidden flex-1 flex-col min-h-0 overflow-hidden">
+                <div class="p-3 border-b border-outline-variant/40 shrink-0 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-mono text-primary-container tracking-widest">MANUAL GRAPH EDITS</span>
                         <span class="text-[9px] font-mono text-outline-variant border border-outline-variant/50 px-1" id="ledger-saved" title="Manual edits are saved to disk and persist across restarts">SAVED</span>
                     </div>
-                </div>
-
-                <div class="p-3 border-b border-outline-variant/50 shrink-0">
-                    <div class="text-[10px] font-mono text-outline-variant tracking-widest mb-2">QUICK ADD &middot; SINGLE ENTITY</div>
+                    <div class="text-[10px] font-mono text-outline-variant" id="ledger-counts">--</div>
                     <div class="grid grid-cols-3 gap-2">
-                        <input id="add-name" type="text" placeholder="Name" spellcheck="false"
-                               class="bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
-                        <input id="add-phone" type="text" placeholder="+91XXXXXXXXXX" spellcheck="false"
-                               class="bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
-                        <input id="add-account" type="text" placeholder="XXXX1234" spellcheck="false"
-                               class="bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
+                        <input id="add-name" type="text" placeholder="Name" spellcheck="false" class="fld text-[10px]">
+                        <input id="add-phone" type="text" placeholder="+91XXXXXXXXXX" spellcheck="false" class="fld text-[10px]">
+                        <input id="add-account" type="text" placeholder="XXXX1234" spellcheck="false" class="fld text-[10px]">
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
+                    <div class="grid grid-cols-2 gap-2">
                         <button id="btn-add" class="bg-primary-container text-[#00363a] text-[10px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors flex items-center justify-center gap-1">
-                            <span class="material-symbols-outlined text-[14px]">add_circle</span> ADD TO GRAPH
-                        </button>
+                            <span class="material-symbols-outlined text-[14px]">add</span> QUICK ADD</button>
                         <button id="btn-undo" class="bg-transparent text-secondary-container text-[10px] font-mono font-bold py-2 border border-secondary-container/60 hover:bg-secondary-container/10 transition-colors flex items-center justify-center gap-1">
-                            <span class="material-symbols-outlined text-[14px]">undo</span> UNDO LAST UPLOAD
-                        </button>
+                            <span class="material-symbols-outlined text-[14px]">undo</span> UNDO LAST</button>
                     </div>
-                    <div class="mt-2">
-                        <button id="btn-reset" class="w-full bg-transparent text-outline text-[10px] font-mono py-1.5 border border-outline-variant hover:border-error hover:text-error transition-colors flex items-center justify-center gap-1">
-                            <span class="material-symbols-outlined text-[14px]">restart_alt</span> RESET TO SOURCE DATA
-                        </button>
-                    </div>
-                </div>
-
-                <div class="p-3 border-b border-outline-variant/50 shrink-0">
-                    <div class="text-[10px] font-mono text-outline-variant tracking-widest mb-2">REMOVE ENTITY &middot; ANY NODE</div>
                     <div class="flex gap-2">
-                        <input id="remove-name" type="text" placeholder="Name / phone / account" spellcheck="false"
-                               class="flex-1 bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface p-2 focus:border-error outline-none placeholder:text-outline-variant/60">
+                        <input id="remove-name" type="text" placeholder="Name / phone / account" spellcheck="false" class="fld text-[10px] flex-1">
                         <button id="btn-remove" class="bg-transparent text-error text-[10px] font-mono font-bold px-3 border border-error/60 hover:bg-error/10 transition-colors flex items-center gap-1 shrink-0">
-                            <span class="material-symbols-outlined text-[14px]">delete</span> REMOVE
-                        </button>
+                            <span class="material-symbols-outlined text-[14px]">delete</span> REMOVE</button>
                     </div>
+                    <button id="btn-reset" class="w-full bg-transparent text-outline text-[10px] font-mono py-1.5 border border-outline-variant hover:border-error hover:text-error transition-colors flex items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">restart_alt</span> RESET GRAPH TO SOURCE DATA</button>
                 </div>
-
-                <div class="flex-1 overflow-y-auto" id="ledger-body">
-                    <div class="p-4 text-[11px] font-mono text-outline-variant text-center animate-pulse">LOADING LEDGER...</div>
-                </div>
+                <div class="flex-1 min-h-0 overflow-y-auto" id="ledger-body"></div>
             </div>
         </div>
+    </div>
 
     </div>
 </main>
 
+<!-- Lightbox for evidence thumbnails -->
+<div id="lightbox" class="hidden fixed inset-0 z-[80] bg-black/85 backdrop-blur-sm items-center justify-center p-8" onclick="this.classList.add('hidden');this.classList.remove('flex')">
+    <img id="lightbox-img" class="max-w-full max-h-full border border-primary-container/40" alt="Evidence">
+</div>
+
+<style>
+    .fld {
+        width: 100%;
+        background: #090e16;
+        border: 1px solid #3b494b;
+        color: #dee2ee;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px;
+        padding: 7px 8px;
+        outline: none;
+        transition: border-color .15s;
+    }
+    .fld:focus { border-color: #00f0ff; }
+    .fld::placeholder { color: rgba(132, 148, 149, .5); }
+    .chip {
+        display: inline-flex; align-items: center; gap: 4px;
+        border: 1px solid; padding: 2px 7px;
+        font-family: 'JetBrains Mono', monospace; font-size: 10px;
+        margin: 0 4px 4px 0;
+    }
+    .ev-thumb { position: relative; width: 62px; height: 62px; border: 1px solid #3b494b; overflow: hidden; cursor: pointer; }
+    .ev-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .ev-thumb button {
+        position: absolute; top: 0; right: 0; width: 16px; height: 16px; line-height: 15px;
+        background: #93000a; color: #ffdad6; border: none; font-size: 11px; cursor: pointer;
+    }
+    .ev-drop-hot { border-color: #00f0ff !important; background: rgba(0,240,255,.05) !important; }
+</style>
+
 <script>
-    document.getElementById('btn-process').addEventListener('click', async function() {
-        const input = document.getElementById('intel-input').value.trim();
-        const terminal = document.getElementById('terminal-output');
-        const dot = document.getElementById('processing-dot');
-        const btn = document.getElementById('btn-process');
-        const cursor = document.getElementById('terminal-cursor');
-        
-        if(!input) { alert("Please enter some text to process."); return; }
+// ==========================================================
+// KRAKEN -- INTAKE CONSOLE
+// Pehle yahan browser ka regex naam dhoondta tha aur bas
+// names/phones/banks POST hote the. Ab poora FIR server jaata hai:
+// spaCy NER -> case file -> profile -> network -> cross-match -> PDF.
+// ==========================================================
+(function () {
+    "use strict";
 
-        // --- DYNAMIC ENTITY EXTRACTION LOGIC (SMART PARSER FOR firs.txt) ---
-        const phoneRegex = /\+91\d{10}/g;
-        const bankRegex = /XXXX\d{4}/g;
-        const nameRegex = /(?:Complainant|accused|associate of|accomplice|co-accused)\s+([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)/g;
+    var evidence = [];          // {name, type, dataUrl, caption}
+    var mode = "passage";
+    var busy = false;
 
-        let phones = input.match(phoneRegex) || [];
-        let banks = input.match(bankRegex) || [];
-        
-        let names = [];
-        let match;
-        while ((match = nameRegex.exec(input)) !== null) {
-            names.push(match[1].trim());
-        }
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (v) {
+        return String(v == null ? "" : v)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    };
 
-        phones = [...new Set(phones)];
-        banks = [...new Set(banks)];
-        names = [...new Set(names)];
-
-        let totalNodes = phones.length + banks.length + names.length;
-
-        if(cursor) cursor.style.display = 'none';
-
-        btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> PROCESSING...`;
-        btn.classList.replace('bg-primary-container', 'bg-surface-variant');
-        btn.classList.replace('text-[#00363a]', 'text-primary-container');
-        btn.classList.replace('border-primary-container', 'border-outline-variant');
-        dot.classList.remove('hidden');
-        
-        terminal.innerHTML = `
-            <div class="text-secondary-fixed">[INIT] Received ${input.split(' ').length} words. Engaging NER Engine...</div>
-            <div class="text-primary-container animate-pulse mt-1">&gt; Scanning text for Nodes & Edges...</div>
-        `;
-
-        let delay = 1000;
-
-        if(totalNodes === 0) {
-            setTimeout(() => addLog("> No recognizable entities found. Use Names, +91 Phones, or Bank IDs (XXXX...).", "text-on-surface-variant"), delay);
-            delay += 1000;
-        } else {
-            names.forEach(n => {
-                setTimeout(() => addLog(`> Found Person: <span class='text-primary'>${n}</span> <span class='text-outline-variant'>(pattern match)</span>`, "text-on-surface"), delay);
-                delay += 800;
-            });
-            phones.forEach(p => {
-                setTimeout(() => addLog(`> Found Phone: <span class='text-secondary-fixed'>${p}</span>`, "text-on-surface"), delay);
-                delay += 800;
-            });
-            banks.forEach(b => {
-                setTimeout(() => addLog(`> Found Account: <span class='text-error'>${b.toUpperCase()}</span>`, "text-on-surface"), delay);
-                delay += 800;
-            });
-        }
-        
-        setTimeout(() => {
-            addLog(`> NLP Extraction Complete. Generated ${totalNodes} Nodes.`, "text-primary-container");
-            if(totalNodes > 0) addLog("[GRAPH_SYNC] Formatting data for Graph Database...", "text-secondary-fixed");
-        }, delay + 500);
-
-        // BACKEND INTEGRATION
-        setTimeout(async () => {
-            if (totalNodes > 0) {
-                try {
-                    const syncRes = await fetch('/api/update-graph', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ names, phones, banks })
-                    });
-                    const syncData = await syncRes.json().catch(() => ({}));
-                    addLog(`[API] ${syncData.message || 'Graph sync complete.'}`,
-                           syncRes.ok ? "text-secondary-container" : "text-error");
-                    if (typeof refreshLedger === 'function') refreshLedger();
-                } catch(e) {
-                    addLog("[ERROR] Backend connection failed.", "text-error");
-                }
-            }
-        }, delay + 1500);
-
-        setTimeout(() => {
-            addLog("[SUCCESS] System updated. <a href='/network' class='underline text-primary hover:text-primary-fixed'>View Live Network</a>.", "text-primary font-bold border-l-2 border-primary pl-2 bg-primary/10 py-1");
-            
-            terminal.innerHTML += `<div class="flex items-center gap-2 mt-4 text-primary-container" id="terminal-cursor"><span>_</span><span class="animate-pulse">█</span></div>`;
-            terminal.scrollTop = terminal.scrollHeight;
-
-            btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check_circle</span> SUCCESS`;
-            btn.classList.replace('bg-surface-variant', 'bg-primary-container');
-            btn.classList.replace('text-primary-container', 'text-[#00363a]');
-            btn.classList.replace('border-outline-variant', 'border-primary-container');
-            dot.classList.add('hidden');
-            
-            setTimeout(() => { btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">memory</span> EXTRACT ENTITIES`; }, 3000);
-            
-        }, delay + 2500);
-
-        function addLog(htmlStr, classes="") {
-            const div = document.createElement('div');
-            div.className = classes;
-            div.innerHTML = htmlStr;
-            terminal.appendChild(div);
-            terminal.scrollTop = terminal.scrollHeight;
-        }
-    });
-
-    // ==========================================================
-    // LIVE GRAPH LEDGER -- add / remove / restore, sab turant graph par lagta hai
-    // ==========================================================
-    const TYPE_ICON = { person: 'person', phone: 'smartphone', bank: 'account_balance', location: 'place' };
-    const TYPE_COLOR = { person: 'primary-container', phone: 'secondary-fixed', bank: 'error', location: 'tertiary-fixed' };
-
-    function ledgerLog(msg, cls) {
-        const terminal = document.getElementById('terminal-output');
-        const cursor = document.getElementById('terminal-cursor');
-        const line = document.createElement('div');
-        line.className = cls || 'text-on-surface-variant';
+    // ---------------------------------------------------- terminal log ----
+    function log(msg, cls) {
+        var terminal = $("terminal-output");
+        var cursor = $("terminal-cursor");
+        var line = document.createElement("div");
+        line.className = cls || "text-on-surface-variant";
         line.innerHTML = msg;
         if (cursor) terminal.insertBefore(line, cursor); else terminal.appendChild(line);
         terminal.scrollTop = terminal.scrollHeight;
     }
+    window.ledgerLog = log;   // ledger section isi ko use karta hai
 
-    async function api(path, body) {
-        const res = await fetch(path, {
-            method: body ? 'POST' : 'GET',
-            cache: 'no-store',
-            headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    async function api(path, body, method) {
+        var res = await fetch(path, {
+            method: method || (body ? "POST" : "GET"),
+            cache: "no-store",
+            headers: body ? { "Content-Type": "application/json" } : undefined,
             body: body ? JSON.stringify(body) : undefined
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || data.status !== 'success') {
-            throw new Error(data.message || `request failed (${res.status})`);
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok || data.status !== "success") {
+            throw new Error(data.message || ("request failed (" + res.status + ")"));
         }
         return data;
     }
 
-    function renderLedger(data) {
-        const s = data.stats || {};
-        document.getElementById('ledger-counts').innerText =
-            `${s.persons} persons · ${s.phones} SIMs · ${s.accounts} accounts · ${s.confirmed_links} links`;
+    // ------------------------------------------------------- mode tabs ----
+    function setMode(next) {
+        mode = next;
+        document.querySelectorAll(".mode-tab").forEach(function (tab) {
+            var on = tab.dataset.mode === next;
+            tab.className = "mode-tab text-[10px] font-mono tracking-widest px-3 py-1 transition-colors border "
+                + (tab.dataset.mode === "form" ? "border-l-0 " : "")
+                + (on ? "border-primary-container bg-primary-container text-[#00363a]"
+                      : "border-outline-variant text-on-surface-variant hover:text-primary-container");
+        });
+        $("pane-passage").className = next === "passage" ? "flex-1 flex flex-col min-h-[200px]" : "hidden";
+        $("pane-form").className = next === "form" ? "flex flex-col gap-3" : "hidden";
+    }
+    document.querySelectorAll(".mode-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () { setMode(tab.dataset.mode); });
+    });
 
-        const badge = document.getElementById('ledger-saved');
-        if (badge && data.state) {
-            const edits = (data.state.uploads || 0) + (data.state.removals || 0);
-            badge.innerText = edits === 0 ? 'SOURCE' : `SAVED · ${edits} EDIT${edits === 1 ? '' : 'S'}`;
-            badge.className = `text-[9px] font-mono px-1 border ${edits === 0
-                ? 'text-outline-variant border-outline-variant/50'
-                : 'text-primary-container border-primary-container/50'}`;
-            badge.title = edits === 0
-                ? 'Graph matches the source dataset exactly'
-                : `${edits} manual edit(s) saved to ${data.state.path} — retained across restarts`;
+    // ------------------------------------------------------ panel tabs ----
+    document.querySelectorAll(".panel-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+            document.querySelectorAll(".panel-tab").forEach(function (t) {
+                var on = t === tab;
+                t.className = "panel-tab flex-1 text-[10px] font-mono tracking-widest px-2 py-3 transition-colors border-b-2 "
+                    + (on ? "text-primary-container border-primary-container"
+                          : "text-on-surface-variant border-transparent hover:text-primary-container");
+            });
+            ["extract", "cases", "ledger"].forEach(function (name) {
+                var pane = $("panel-" + name);
+                pane.className = name === tab.dataset.panel
+                    ? "flex-1 flex flex-col min-h-0 overflow-hidden"
+                    : "hidden flex-1 flex-col min-h-0 overflow-hidden";
+            });
+            if (tab.dataset.panel === "cases") loadCases();
+            if (tab.dataset.panel === "ledger") refreshLedger();
+        });
+    });
+
+    // -------------------------------------------------------- evidence ----
+    function renderEvidence() {
+        $("ev-count").innerText = evidence.length + " attached";
+        $("ev-thumbs").innerHTML = evidence.map(function (item, i) {
+            return '<div class="ev-thumb" title="' + esc(item.name) + '">'
+                + '<img src="' + item.dataUrl + '" alt="' + esc(item.name) + '" onclick="krakenLightbox(\'' + i + '\')">'
+                + '<button title="Remove" onclick="krakenDropEvidence(' + i + ')">&times;</button></div>';
+        }).join("");
+    }
+
+    window.krakenDropEvidence = function (i) {
+        evidence.splice(i, 1);
+        renderEvidence();
+    };
+    window.krakenLightbox = function (i) {
+        var item = evidence[Number(i)];
+        if (!item) return;
+        $("lightbox-img").src = item.dataUrl;
+        $("lightbox").classList.remove("hidden");
+        $("lightbox").classList.add("flex");
+    };
+
+    function acceptFiles(files) {
+        var accepted = 0;
+        Array.prototype.forEach.call(files || [], function (file) {
+            if (!file.type || file.type.indexOf("image/") !== 0) return;
+            if (file.size > 6 * 1024 * 1024) {
+                log("[WARN] " + esc(file.name) + " skipped &mdash; over the 6 MB limit.", "text-secondary-container");
+                return;
+            }
+            accepted++;
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                evidence.push({
+                    name: file.name || ("pasted-" + (evidence.length + 1) + ".png"),
+                    type: file.type,
+                    dataUrl: e.target.result,
+                    caption: file.name || "Pasted image"
+                });
+                renderEvidence();
+            };
+            reader.readAsDataURL(file);
+        });
+        if (accepted) log("[EVIDENCE] " + accepted + " image(s) attached.", "text-primary-container");
+    }
+
+    $("ev-drop").addEventListener("click", function () { $("ev-file").click(); });
+    $("ev-file").addEventListener("change", function (e) { acceptFiles(e.target.files); e.target.value = ""; });
+
+    ["dragenter", "dragover"].forEach(function (evt) {
+        $("ev-drop").addEventListener(evt, function (e) {
+            e.preventDefault(); $("ev-drop").classList.add("ev-drop-hot");
+        });
+    });
+    ["dragleave", "drop"].forEach(function (evt) {
+        $("ev-drop").addEventListener(evt, function (e) {
+            e.preventDefault(); $("ev-drop").classList.remove("ev-drop-hot");
+        });
+    });
+    $("ev-drop").addEventListener("drop", function (e) {
+        acceptFiles(e.dataTransfer && e.dataTransfer.files);
+    });
+
+    // Paste kahin bhi karo -- jab tak kisi text field mein na ho.
+    document.addEventListener("paste", function (e) {
+        var target = e.target;
+        var typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA");
+        var items = (e.clipboardData || {}).items || [];
+        var images = [];
+        Array.prototype.forEach.call(items, function (item) {
+            if (item.kind === "file" && item.type.indexOf("image/") === 0) {
+                var file = item.getAsFile();
+                if (file) images.push(file);
+            }
+        });
+        if (!images.length) return;
+        // Image clipboard mein hai -> text field mein bhi attach kar do.
+        if (typing) e.preventDefault();
+        acceptFiles(images);
+    });
+
+    // ------------------------------------------------------ form payload --
+    var FORM_FIELDS = ["fir_number", "incident_date", "police_station", "district",
+                       "complainant", "complainant_phone", "accused", "phones",
+                       "accounts", "vehicles", "offence", "sections", "location", "narrative"];
+
+    function readForm() {
+        var out = {};
+        FORM_FIELDS.forEach(function (key) {
+            var el = $("f-" + key);
+            if (el) out[key] = el.value;
+        });
+        return out;
+    }
+
+    function payload() {
+        return {
+            mode: mode,
+            narrative: mode === "passage" ? $("fir-narrative").value : "",
+            form: mode === "form" ? readForm() : {},
+            officer: $("fir-officer").value,
+            evidence: evidence.map(function (item) {
+                return { name: item.name, type: item.type, data: item.dataUrl, caption: item.caption };
+            })
+        };
+    }
+
+    // ------------------------------------------------------- extraction ---
+    var CHIP = {
+        persons:       ["person",          "#00f0ff", "PERSON"],
+        phones:        ["smartphone",      "#ffba20", "SIM"],
+        accounts:      ["account_balance", "#ffb4ab", "ACCOUNT"],
+        locations:     ["place",           "#ffdad5", "LOCATION"],
+        vehicles:      ["directions_car",  "#7df4ff", "VEHICLE"],
+        sections:      ["gavel",           "#feb700", "IPC"],
+        dates:         ["event",           "#b9cacb", "DATE"],
+        organisations: ["domain",          "#b9cacb", "ORG"]
+    };
+
+    function chips(label, values, style) {
+        if (!values || !values.length) return "";
+        return '<div><div class="text-[9px] font-mono text-outline-variant tracking-widest mb-1">'
+            + esc(label) + ' (' + values.length + ')</div><div>'
+            + values.map(function (v) {
+                return '<span class="chip" style="border-color:' + style[1] + ';color:' + style[1] + '">'
+                    + '<span class="material-symbols-outlined" style="font-size:12px">' + style[0] + '</span>'
+                    + esc(v) + '</span>';
+              }).join("")
+            + '</div></div>';
+    }
+
+    function renderExtract(extracted, heading) {
+        var body = $("extract-body");
+        var blocks = Object.keys(CHIP).map(function (key) {
+            return chips(CHIP[key][2] + "S", extracted[key], CHIP[key]);
+        }).join("");
+
+        var links = "";
+        var rels = extracted.relationships || [];
+        var owns = extracted.ownership || [];
+        if (rels.length || owns.length) {
+            links = '<div><div class="text-[9px] font-mono text-outline-variant tracking-widest mb-1">INFERRED LINKS</div>'
+                + rels.map(function (r) {
+                    return '<div class="text-[10px] font-mono text-on-surface-variant py-0.5">'
+                        + '<span class="text-white">' + esc(r.person_a) + '</span> &mdash; <i>' + esc(r.type)
+                        + '</i> &mdash; <span class="text-white">' + esc(r.person_b) + '</span></div>';
+                  }).join("")
+                + owns.map(function (o) {
+                    var what = o.type === "OWNS_PHONE" ? "registered SIM" : "bank account";
+                    return '<div class="text-[10px] font-mono text-on-surface-variant py-0.5">'
+                        + '<span class="text-white">' + esc(o.person) + '</span> &mdash; ' + what
+                        + ' &mdash; <span class="text-white">' + esc(o.value) + '</span></div>';
+                  }).join("")
+                + '</div>';
         }
 
-        const body = document.getElementById('ledger-body');
-        const added = data.added || [];
-        const removed = data.removed || [];
-        const droppedLinks = data.removed_links || [];
-        let html = '';
+        body.innerHTML = (heading || "")
+            + '<div class="text-[10px] font-mono text-outline-variant tracking-widest border-b border-outline-variant/40 pb-1">'
+            + 'FIR ' + esc(extracted.fir_number || "number not stated") + '</div>'
+            + (blocks || '<div class="text-[11px] font-mono text-outline-variant">Nothing extracted yet.</div>')
+            + links;
+    }
 
-        html += `<div class="px-3 py-2 bg-surface-container-low border-b border-outline-variant/40 flex justify-between items-center">
-                    <span class="text-[10px] font-mono text-primary-container tracking-widest">ADDED BY OPERATOR (${added.length})</span>
-                    <span class="text-[9px] font-mono text-outline-variant">${data.batches} upload${data.batches === 1 ? '' : 's'}</span>
-                 </div>`;
+    function countEntities(e) {
+        return (e.persons || []).length + (e.phones || []).length + (e.accounts || []).length;
+    }
+
+    // ---------------------------------------------------------- ANALYSE ---
+    $("btn-analyse").addEventListener("click", async function () {
+        if (busy) return;
+        busy = true;
+        var btn = this;
+        var original = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> ANALYSING';
+        log("[NER] Running extraction over draft...", "text-secondary-fixed");
+        try {
+            var data = await api("/api/fir/extract", payload());
+            renderExtract(data.extracted);
+            log("[NER] " + countEntities(data.extracted) + " core entities identified. Nothing registered yet.",
+                "text-primary-container");
+        } catch (err) {
+            log("[ERROR] Analysis failed: " + esc(err.message), "text-error");
+        } finally {
+            btn.innerHTML = original;
+            busy = false;
+        }
+    });
+
+    // --------------------------------------------------------- REGISTER ---
+    $("btn-register").addEventListener("click", async function () {
+        if (busy) return;
+        busy = true;
+        var btn = this;
+        var original = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> REGISTERING';
+        log("[FIR] Registering report &mdash; opening case file...", "text-secondary-fixed");
+
+        try {
+            var data = await api("/api/fir/register", payload());
+
+            var merge = data.merge || {};
+            var heading = '<div class="border border-primary-container/50 bg-primary-container/5 p-3">'
+                + '<div class="text-[10px] font-mono text-primary-container tracking-widest mb-1">CASE REGISTERED</div>'
+                + '<div class="text-[15px] font-mono font-bold text-white">' + esc(data.case_no) + '</div>'
+                + '<div class="text-[10px] font-mono text-on-surface-variant mt-1">' + esc(data.title) + '</div>'
+                + '<div class="text-[10px] font-mono text-on-surface-variant mt-2">'
+                + 'Graph merge: +' + (merge.persons || 0) + ' persons, +' + (merge.phones || 0) + ' SIMs, +'
+                + (merge.accounts || 0) + ' accounts, +' + (merge.links || 0) + ' links</div>'
+                + '<div class="flex gap-2 mt-3 flex-wrap">'
+                + (data.pdf_url
+                    ? '<a href="' + data.pdf_url + '" target="_blank" class="text-[9px] font-mono text-primary-container border border-primary-container/50 px-2 py-1 hover:bg-primary-container/10 transition-colors inline-flex items-center gap-1">'
+                      + '<span class="material-symbols-outlined text-[12px]">picture_as_pdf</span> OPEN CASE PDF</a>'
+                    : '<span class="text-[9px] font-mono text-error">PDF generation unavailable</span>')
+                + '<a href="/network" class="text-[9px] font-mono text-on-surface-variant border border-outline-variant px-2 py-1 hover:text-primary-container hover:border-primary-container transition-colors inline-flex items-center gap-1">'
+                + '<span class="material-symbols-outlined text-[12px]">hub</span> VIEW NETWORK</a>'
+                + ((data.extracted.persons || []).length
+                    ? '<a href="/profile?name=' + encodeURIComponent(data.extracted.persons[0])
+                      + '" class="text-[9px] font-mono text-on-surface-variant border border-outline-variant px-2 py-1 hover:text-primary-container hover:border-primary-container transition-colors inline-flex items-center gap-1">'
+                      + '<span class="material-symbols-outlined text-[12px]">person_search</span> OPEN PROFILE</a>'
+                    : '')
+                + '</div></div>';
+
+            // Cross-match ka block
+            var matches = data.matches || [];
+            if (matches.length) {
+                heading += '<div class="border border-error/50 bg-error/5 p-3">'
+                    + '<div class="text-[10px] font-mono text-error tracking-widest mb-2">'
+                    + 'CROSS-MATCH &mdash; ' + matches.length + ' HIT' + (matches.length === 1 ? "" : "S") + '</div>'
+                    + matches.map(function (m) {
+                        var prior = (m.prior_cases || []).map(function (p) { return p.case_no; }).join(", ");
+                        var where = [];
+                        if (m.in_graph) where.push("already in the live graph");
+                        if (prior) where.push("named in " + prior);
+                        return '<div class="text-[10px] font-mono text-on-surface-variant py-0.5">'
+                            + '<span class="text-white">' + esc(m.value) + '</span> '
+                            + '<span class="text-outline-variant">(' + esc(m.kind) + ')</span> &mdash; '
+                            + esc(where.join("; ")) + '</div>';
+                      }).join("")
+                    + '</div>';
+            }
+
+            renderExtract(data.extracted, heading);
+
+            log("[FIR] " + esc(data.case_no) + " registered. "
+                + countEntities(data.extracted) + " entities merged into the live graph.",
+                "text-primary-container");
+            if (data.pdf_url) log("[PDF] Case document generated &mdash; " + esc(data.case_no) + ".pdf", "text-primary-container");
+
+            // Bell + toast
+            (data.notifications || []).forEach(function (note) {
+                if (window.krakenToast) window.krakenToast(note.title, note.detail, note.tone, note.href);
+                log("[ALERT] " + esc(note.title) + " &mdash; " + esc(note.detail), "text-error");
+            });
+            if (!(data.notifications || []).length && window.krakenToast) {
+                window.krakenToast(data.case_no + " REGISTERED",
+                    "No prior record matched. All subjects filed as new.", "info", null);
+            }
+            bumpBell();
+
+            // Draft saaf karo taaki galti se dobara register na ho
+            if (mode === "passage") $("fir-narrative").value = "";
+            else FORM_FIELDS.forEach(function (k) { if ($("f-" + k)) $("f-" + k).value = ""; });
+            evidence = [];
+            renderEvidence();
+            loadCases();
+            refreshLedger();
+
+        } catch (err) {
+            log("[ERROR] Registration refused: " + esc(err.message), "text-error");
+            if (window.krakenToast) window.krakenToast("REGISTRATION FAILED", err.message, "high", null);
+        } finally {
+            btn.innerHTML = original;
+            busy = false;
+        }
+    });
+
+    function bumpBell() {
+        // Header ka badge turant refresh -- kraken_header.js apna poll bhi karta hai.
+        fetch("/api/notifications?unread=1").then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                if (!d) return;
+                var icons = document.querySelectorAll("header .material-symbols-outlined");
+                icons.forEach(function (icon) {
+                    if ((icon.textContent || "").trim() !== "notifications") return;
+                    var btn = icon.closest("button");
+                    if (!btn) return;
+                    var badge = btn.querySelector(".kh-badge");
+                    if (badge) badge.remove();
+                    if (!d.unread) return;
+                    var el = document.createElement("span");
+                    el.className = "kh-badge";
+                    el.innerText = d.unread > 9 ? "9+" : String(d.unread);
+                    btn.appendChild(el);
+                });
+            }).catch(function () {});
+    }
+
+    // ------------------------------------------------------- case files ---
+    async function loadCases() {
+        var body = $("cases-body");
+        try {
+            var data = await api("/api/fir/cases");
+            var cases = data.cases || [];
+            $("cases-count").innerText = cases.length + (cases.length === 1 ? " case" : " cases");
+            if (!cases.length) {
+                body.innerHTML = '<div class="p-4 text-[11px] font-mono text-outline-variant text-center">'
+                    + 'No FIR registered yet. File one on the left.</div>';
+                return;
+            }
+            body.innerHTML = cases.map(function (c) {
+                var when = (c.registered_at || "").replace("T", " ");
+                return '<div class="px-3 py-3 border-b border-outline-variant/20 hover:bg-surface-container transition-colors">'
+                    + '<div class="flex justify-between items-start gap-2">'
+                    + '<div class="min-w-0">'
+                    + '<div class="text-[11px] font-mono text-white">' + esc(c.case_no) + '</div>'
+                    + '<div class="text-[10px] font-mono text-primary-container truncate">' + esc(c.title || "") + '</div>'
+                    + '<div class="text-[9px] font-mono text-outline-variant mt-1">'
+                    + (c.fir_number ? "FIR " + esc(c.fir_number) + " &middot; " : "")
+                    + esc(when) + ' &middot; ' + esc(c.officer || "") + '</div>'
+                    + '</div>'
+                    + (c.pdf_url
+                        ? '<a href="' + c.pdf_url + '" target="_blank" title="Open case PDF" '
+                          + 'class="text-primary-container border border-primary-container/40 px-2 py-0.5 text-[9px] font-mono hover:bg-primary-container/10 transition-colors shrink-0 inline-flex items-center gap-1">'
+                          + '<span class="material-symbols-outlined text-[12px]">picture_as_pdf</span>PDF</a>'
+                        : '')
+                    + '</div>'
+                    + '<div class="mt-2">'
+                    + (c.persons || []).slice(0, 6).map(function (p) {
+                        return '<span class="chip" style="border-color:#00f0ff;color:#00f0ff">'
+                            + '<span class="material-symbols-outlined" style="font-size:12px">person</span>'
+                            + esc(p) + '</span>';
+                      }).join("")
+                    + '</div>'
+                    + '<div class="text-[9px] font-mono text-outline-variant">'
+                    + (c.phones || []).length + ' SIM &middot; ' + (c.accounts || []).length + ' account &middot; '
+                    + c.evidence_count + ' exhibit &middot; '
+                    + (c.match_count
+                        ? '<span class="text-error">' + c.match_count + ' cross-match</span>'
+                        : 'no cross-match')
+                    + '</div></div>';
+            }).join("");
+        } catch (err) {
+            body.innerHTML = '<div class="p-4 text-[11px] font-mono text-error text-center">CASE INDEX UNAVAILABLE: '
+                + esc(err.message) + '</div>';
+        }
+    }
+
+    // ---------------------------------------------------------- sample ----
+    $("btn-sample").addEventListener("click", function () {
+        $("fir-narrative").value = $("fir-narrative").placeholder;
+        log("[SYS] Sample FIR loaded into the draft.", "text-outline-variant");
+    });
+
+    // ---------------------------------------------------------- ledger ----
+    var TYPE_ICON = { person: "person", phone: "smartphone", bank: "account_balance", location: "place" };
+    var TYPE_COLOR = { person: "primary-container", phone: "secondary-fixed", bank: "error", location: "tertiary-fixed" };
+
+    function renderLedger(data) {
+        var s = data.stats || {};
+        $("ledger-counts").innerText = s.persons + " persons · " + s.phones + " SIMs · "
+            + s.accounts + " accounts · " + s.confirmed_links + " links";
+
+        var badge = $("ledger-saved");
+        if (badge && data.state) {
+            var edits = (data.state.uploads || 0) + (data.state.removals || 0);
+            badge.innerText = edits === 0 ? "SOURCE" : "SAVED · " + edits + " EDIT" + (edits === 1 ? "" : "S");
+            badge.className = "text-[9px] font-mono px-1 border " + (edits === 0
+                ? "text-outline-variant border-outline-variant/50"
+                : "text-primary-container border-primary-container/50");
+        }
+
+        var added = data.added || [], removed = data.removed || [], dropped = data.removed_links || [];
+        var html = '<div class="px-3 py-2 bg-surface-container-low border-b border-outline-variant/40 flex justify-between items-center">'
+            + '<span class="text-[10px] font-mono text-primary-container tracking-widest">ADDED (' + added.length + ')</span>'
+            + '<span class="text-[9px] font-mono text-outline-variant">' + data.batches + ' upload'
+            + (data.batches === 1 ? "" : "s") + '</span></div>';
+
         html += added.length === 0
-            ? `<div class="px-3 py-3 text-[10px] font-mono text-outline-variant">No manual entries yet. Extract entities from text, or use Quick Add above.</div>`
-            : added.map(x => `
-                <div class="px-3 py-2 border-b border-outline-variant/20 flex items-center justify-between gap-2 hover:bg-surface-container transition-colors">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <span class="material-symbols-outlined text-[14px] text-${TYPE_COLOR[x.type] || 'outline'}">${TYPE_ICON[x.type] || 'hub'}</span>
-                        <div class="min-w-0">
-                            <div class="text-[11px] font-mono text-white truncate">${x.id}</div>
-                            <div class="text-[9px] font-mono text-outline-variant">
-                                ${x.type.toUpperCase()} · batch ${x.batch}${x.owner ? ` · owner ${x.owner}` : ''}${x.links !== undefined ? ` · ${x.links} link${x.links === 1 ? '' : 's'}` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="removeEntity('${x.id.replace(/'/g, "\\'")}')"
-                            class="text-error border border-error/40 px-2 py-0.5 text-[9px] font-mono hover:bg-error/10 transition-colors shrink-0">REMOVE</button>
-                </div>`).join('');
+            ? '<div class="px-3 py-3 text-[10px] font-mono text-outline-variant">No manual entries. Register an FIR, or use Quick Add.</div>'
+            : added.map(function (x) {
+                return '<div class="px-3 py-2 border-b border-outline-variant/20 flex items-center justify-between gap-2 hover:bg-surface-container transition-colors">'
+                    + '<div class="flex items-center gap-2 min-w-0">'
+                    + '<span class="material-symbols-outlined text-[14px] text-' + (TYPE_COLOR[x.type] || "outline") + '">'
+                    + (TYPE_ICON[x.type] || "hub") + '</span><div class="min-w-0">'
+                    + '<div class="text-[11px] font-mono text-white truncate">' + esc(x.id) + '</div>'
+                    + '<div class="text-[9px] font-mono text-outline-variant">' + esc(x.type.toUpperCase())
+                    + ' · batch ' + x.batch + (x.owner ? " · owner " + esc(x.owner) : "")
+                    + (x.links !== undefined ? " · " + x.links + " link" + (x.links === 1 ? "" : "s") : "")
+                    + '</div></div></div>'
+                    + '<button onclick="removeEntity(' + JSON.stringify(x.id).replace(/"/g, "&quot;") + ')"'
+                    + ' class="text-error border border-error/40 px-2 py-0.5 text-[9px] font-mono hover:bg-error/10 transition-colors shrink-0">REMOVE</button></div>';
+              }).join("");
 
-        html += `<div class="px-3 py-2 bg-surface-container-low border-b border-t border-outline-variant/40 flex justify-between items-center">
-                    <span class="text-[10px] font-mono text-error tracking-widest">REMOVED (${removed.length + droppedLinks.length})</span>
-                    ${(removed.length + droppedLinks.length) ? `<button onclick="restoreAll()" class="text-[9px] font-mono text-primary-container border border-primary-container/40 px-2 py-0.5 hover:bg-primary-container/10 transition-colors">RESTORE ALL</button>` : ''}
-                 </div>`;
-        html += (removed.length === 0 && droppedLinks.length === 0)
-            ? `<div class="px-3 py-3 text-[10px] font-mono text-outline-variant">Nothing removed. The graph is complete.</div>`
-            : removed.map(x => `
-                <div class="px-3 py-2 border-b border-outline-variant/20 flex items-center justify-between gap-2 bg-error/5">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <span class="material-symbols-outlined text-[14px] text-error">${TYPE_ICON[x.type] || 'hub'}</span>
-                        <div class="text-[11px] font-mono text-on-surface-variant line-through truncate">${x.id}</div>
-                    </div>
-                    <button onclick="restoreEntity('${x.id.replace(/'/g, "\\'")}')"
-                            class="text-primary-container border border-primary-container/40 px-2 py-0.5 text-[9px] font-mono hover:bg-primary-container/10 transition-colors shrink-0">RESTORE</button>
-                </div>`).join('')
-              + droppedLinks.map(pair => `
-                <div class="px-3 py-2 border-b border-outline-variant/20 text-[10px] font-mono text-on-surface-variant bg-error/5">
-                    <span class="line-through">${pair[0]} &harr; ${pair[1]}</span>
-                    <span class="text-[9px] text-outline-variant block">LINK REMOVED</span>
-                </div>`).join('');
+        html += '<div class="px-3 py-2 bg-surface-container-low border-b border-t border-outline-variant/40 flex justify-between items-center">'
+            + '<span class="text-[10px] font-mono text-error tracking-widest">REMOVED (' + (removed.length + dropped.length) + ')</span>'
+            + ((removed.length + dropped.length)
+                ? '<button onclick="restoreAll()" class="text-[9px] font-mono text-primary-container border border-primary-container/40 px-2 py-0.5 hover:bg-primary-container/10 transition-colors">RESTORE ALL</button>'
+                : "") + '</div>';
 
-        body.innerHTML = html;
+        html += (removed.length === 0 && dropped.length === 0)
+            ? '<div class="px-3 py-3 text-[10px] font-mono text-outline-variant">Nothing removed. The graph is complete.</div>'
+            : removed.map(function (x) {
+                return '<div class="px-3 py-2 border-b border-outline-variant/20 flex items-center justify-between gap-2 bg-error/5">'
+                    + '<div class="flex items-center gap-2 min-w-0">'
+                    + '<span class="material-symbols-outlined text-[14px] text-error">' + (TYPE_ICON[x.type] || "hub") + '</span>'
+                    + '<div class="text-[11px] font-mono text-on-surface-variant line-through truncate">' + esc(x.id) + '</div></div>'
+                    + '<button onclick="restoreEntity(' + JSON.stringify(x.id).replace(/"/g, "&quot;") + ')"'
+                    + ' class="text-primary-container border border-primary-container/40 px-2 py-0.5 text-[9px] font-mono hover:bg-primary-container/10 transition-colors shrink-0">RESTORE</button></div>';
+              }).join("")
+              + dropped.map(function (pair) {
+                return '<div class="px-3 py-2 border-b border-outline-variant/20 text-[10px] font-mono text-on-surface-variant bg-error/5">'
+                    + '<span class="line-through">' + esc(pair[0]) + ' &harr; ' + esc(pair[1]) + '</span>'
+                    + '<span class="text-[9px] text-outline-variant block">LINK REMOVED</span></div>';
+              }).join("");
+
+        $("ledger-body").innerHTML = html;
     }
 
     async function refreshLedger() {
         try {
-            renderLedger(await api('/api/manual-log'));
-        } catch (e) {
-            document.getElementById('ledger-body').innerHTML =
-                `<div class="p-4 text-[11px] font-mono text-error text-center">LEDGER UNAVAILABLE: ${e.message}</div>`;
+            renderLedger(await api("/api/manual-log"));
+        } catch (err) {
+            $("ledger-body").innerHTML = '<div class="p-4 text-[11px] font-mono text-error text-center">LEDGER UNAVAILABLE: '
+                + esc(err.message) + '</div>';
         }
     }
 
-    window.removeEntity = async function(name) {
+    window.removeEntity = async function (name) {
         try {
-            const res = await api('/api/remove-entity', { name });
-            ledgerLog(`[REMOVE] ${res.removed} (${res.type}) removed from graph &mdash; ${res.links_dropped} link(s) dropped.`, 'text-error');
+            var res = await api("/api/remove-entity", { name: name });
+            log("[REMOVE] " + esc(res.removed) + " (" + esc(res.type) + ") removed &mdash; "
+                + res.links_dropped + " link(s) dropped.", "text-error");
             await refreshLedger();
-        } catch (e) {
-            ledgerLog(`[ERROR] Remove failed: ${e.message}`, 'text-error');
-        }
+        } catch (err) { log("[ERROR] Remove failed: " + esc(err.message), "text-error"); }
     };
 
-    window.restoreEntity = async function(name) {
+    window.restoreEntity = async function (name) {
         try {
-            const res = await api('/api/restore-entity', { name });
-            ledgerLog(`[RESTORE] ${res.restored} restored to graph.`, 'text-primary-container');
+            var res = await api("/api/restore-entity", { name: name });
+            log("[RESTORE] " + esc(res.restored) + " restored to graph.", "text-primary-container");
             await refreshLedger();
-        } catch (e) {
-            ledgerLog(`[ERROR] Restore failed: ${e.message}`, 'text-error');
-        }
+        } catch (err) { log("[ERROR] Restore failed: " + esc(err.message), "text-error"); }
     };
 
-    window.restoreAll = async function() {
+    window.restoreAll = async function () {
         try {
-            const res = await api('/api/restore-entity', { all: true });
-            ledgerLog(`[RESTORE] ${res.restored} removal(s) reversed &mdash; graph complete.`, 'text-primary-container');
+            var res = await api("/api/restore-entity", { all: true });
+            log("[RESTORE] " + res.restored + " removal(s) reversed.", "text-primary-container");
             await refreshLedger();
-        } catch (e) {
-            ledgerLog(`[ERROR] Restore-all failed: ${e.message}`, 'text-error');
-        }
+        } catch (err) { log("[ERROR] Restore-all failed: " + esc(err.message), "text-error"); }
     };
 
-    document.getElementById('btn-add').addEventListener('click', async function() {
-        const nameEl = document.getElementById('add-name');
-        const phoneEl = document.getElementById('add-phone');
-        const accEl = document.getElementById('add-account');
-        const names = nameEl.value.trim() ? [nameEl.value.trim()] : [];
-        const phones = phoneEl.value.trim() ? [phoneEl.value.trim()] : [];
-        const banks = accEl.value.trim() ? [accEl.value.trim()] : [];
-
+    $("btn-add").addEventListener("click", async function () {
+        var n = $("add-name"), p = $("add-phone"), a = $("add-account");
+        var names = n.value.trim() ? [n.value.trim()] : [];
+        var phones = p.value.trim() ? [p.value.trim()] : [];
+        var banks = a.value.trim() ? [a.value.trim()] : [];
         if (!names.length && !phones.length && !banks.length) {
-            ledgerLog('[WARN] Quick Add is empty &mdash; complete at least one field.', 'text-secondary-container');
+            log("[WARN] Quick Add is empty.", "text-secondary-container");
             return;
         }
         try {
-            const res = await api('/api/update-graph', { names, phones, banks });
-            const a = res.added || {};
-            const total = (a.persons || 0) + (a.phones || 0) + (a.accounts || 0) + (a.links || 0);
-            ledgerLog(`[ADD] ${res.message}`, total > 0 ? 'text-primary-container' : 'text-secondary-container');
-            nameEl.value = phoneEl.value = accEl.value = '';
+            var res = await api("/api/update-graph", { names: names, phones: phones, banks: banks });
+            var added = res.added || {};
+            var total = (added.persons || 0) + (added.phones || 0) + (added.accounts || 0) + (added.links || 0);
+            log("[ADD] " + esc(res.message), total > 0 ? "text-primary-container" : "text-secondary-container");
+            n.value = p.value = a.value = "";
             await refreshLedger();
-        } catch (e) {
-            ledgerLog(`[ERROR] Add failed: ${e.message}`, 'text-error');
-        }
+        } catch (err) { log("[ERROR] Add failed: " + esc(err.message), "text-error"); }
     });
 
-    document.getElementById('btn-remove').addEventListener('click', function() {
-        const el = document.getElementById('remove-name');
-        const name = el.value.trim();
-        if (!name) {
-            ledgerLog('[WARN] Enter an entity name to remove.', 'text-secondary-container');
+    $("btn-remove").addEventListener("click", function () {
+        var el = $("remove-name");
+        if (!el.value.trim()) { log("[WARN] Enter an entity to remove.", "text-secondary-container"); return; }
+        window.removeEntity(el.value.trim()).then(function () { el.value = ""; });
+    });
+
+    $("remove-name").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") $("btn-remove").click();
+    });
+    ["add-name", "add-phone", "add-account"].forEach(function (id) {
+        $(id).addEventListener("keydown", function (e) { if (e.key === "Enter") $("btn-add").click(); });
+    });
+
+    $("btn-reset").addEventListener("click", async function () {
+        var btn = this;
+        if (btn.dataset.armed !== "1") {
+            btn.dataset.armed = "1";
+            btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">warning</span> CONFIRM &mdash; CLEARS ALL EDITS';
+            setTimeout(function () {
+                btn.dataset.armed = "";
+                btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">restart_alt</span> RESET GRAPH TO SOURCE DATA';
+            }, 5000);
             return;
         }
-        window.removeEntity(name).then(() => { el.value = ''; });
-    });
-
-    document.getElementById('remove-name').addEventListener('keydown', e => {
-        if (e.key === 'Enter') document.getElementById('btn-remove').click();
-    });
-    ['add-name', 'add-phone', 'add-account'].forEach(id => {
-        document.getElementById(id).addEventListener('keydown', e => {
-            if (e.key === 'Enter') document.getElementById('btn-add').click();
-        });
-    });
-
-    document.getElementById('btn-reset').addEventListener('click', async function() {
+        btn.dataset.armed = "";
+        btn.innerHTML = '<span class="material-symbols-outlined text-[14px]">restart_alt</span> RESET GRAPH TO SOURCE DATA';
         try {
-            const res = await api('/api/reset-graph', {});
-            ledgerLog(`[RESET] Cleared ${res.cleared_uploads} upload(s) and ${res.cleared_removals} removal(s) &mdash; graph restored to source dataset.`, 'text-secondary-container');
+            var res = await api("/api/reset-graph", {});
+            log("[RESET] Cleared " + res.cleared_uploads + " upload(s) and " + res.cleared_removals
+                + " removal(s) &mdash; graph restored to source dataset.", "text-secondary-container");
             await refreshLedger();
-        } catch (e) {
-            ledgerLog(`[ERROR] Reset failed: ${e.message}`, 'text-error');
-        }
+        } catch (err) { log("[ERROR] Reset failed: " + esc(err.message), "text-error"); }
     });
 
-    document.getElementById('btn-undo').addEventListener('click', async function() {
+    $("btn-undo").addEventListener("click", async function () {
         try {
-            const res = await api('/api/undo-intake');
-            const names = (res.undone.names || []).join(', ') || '(no names)';
-            ledgerLog(`[UNDO] Last upload reversed: ${names}`, 'text-secondary-container');
+            var res = await api("/api/undo-intake");
+            log("[UNDO] Last upload reversed: " + esc((res.undone.names || []).join(", ") || "(no names)"),
+                "text-secondary-container");
             await refreshLedger();
-        } catch (e) {
-            ledgerLog(`[UNDO] ${e.message}`, 'text-secondary-container');
-        }
+        } catch (err) { log("[UNDO] " + esc(err.message), "text-secondary-container"); }
     });
 
-    document.addEventListener('DOMContentLoaded', refreshLedger);
+    // ------------------------------------------------------------ boot ----
+    setMode("passage");
+    renderEvidence();
+    loadCases();
+    refreshLedger();
 
+    // ?case=KRK-... se aaye ho (bell alert se) to seedha Case Files kholo
+    if (new URLSearchParams(window.location.search).get("case")) {
+        document.querySelector('.panel-tab[data-panel="cases"]').click();
+    }
+})();
 </script>
 <script src="/static/kraken_logout.js"></script>
 <script src="/static/kraken_header.js"></script>

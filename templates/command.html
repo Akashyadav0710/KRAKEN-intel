@@ -118,6 +118,7 @@
         <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent" href="/intake"><span class="material-symbols-outlined text-[18px]">upload_file</span> Intake</a>
         <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent" href="/profile"><span class="material-symbols-outlined text-[18px]">person_search</span> Profiles</a>
         <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent" href="/reports"><span class="material-symbols-outlined text-[18px]">description</span> Reports</a>
+            <a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent" href="/cases"><span class="material-symbols-outlined text-[18px]">folder_open</span> Case Files</a>
     </div>
 
     <div class="p-4 border-t border-outline-variant/50 flex flex-col gap-3">
@@ -130,7 +131,7 @@
 </nav>
 
 <main class="absolute top-16 left-64 w-[calc(100%-16rem)] h-[calc(100vh-4rem)] p-unit flex flex-col gap-unit overflow-y-auto" style="overflow-y: scroll !important;">
-    <div class="p-2 space-y-unit flex flex-col pb-20">
+    <div class="p-2 space-y-unit flex flex-col flex-1 min-h-0 pb-2">
         
         <section class="grid grid-cols-5 gap-unit shrink-0">
             <a href="/profile" class="border border-outline-variant bg-surface flex flex-col cursor-pointer hover:border-primary-container hover:bg-surface-container transition-colors">
@@ -189,25 +190,40 @@
             </a>
         </section>
 
-        <div class="grid grid-cols-12 gap-unit flex-1">
-            <aside class="col-span-12 lg:col-span-3 border border-outline-variant bg-surface flex flex-col relative min-h-[400px]">
-                <div class="bg-surface-container px-3 py-2 border-b border-outline-variant flex justify-between items-center shrink-0">
-                    <span class="text-[11px] font-bold tracking-widest text-on-surface flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[16px] text-primary-container">share</span> MINI LIVE NETWORK
-                    </span>
-                    <span class="text-[10px] text-on-surface-variant">SYS-NET-01</span>
-                </div>
-                <div class="flex-1 relative overflow-hidden bg-[#0a0d12]">
-                    <div class="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-screen" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDBfSzgk6hVsoDQY0eEp9Zgw6MK3Qpyt3cFobwB1QjhxS_IkvcTJt6SpU76PGHSXcTP6arQBn8XFEBi5pIoNkucjFCt7-xEkInrbZRwTQZxi4-mR3WXB59beUHODOlcuZJ-j_1R4sDauN7-vdSgYUH9DSX3xZQhHWLCB06KEcAD_lCrz_--e90Jx6yGkfwPBZp5ROLtIzEE_I39JyfneKyyy-bet1KwbjiEU0EpYxGbkjjpkVjK_7MS')"></div>
-                    <div class="absolute inset-0 scan-line"></div>
-                    <div class="absolute top-2 left-2 text-[10px] text-primary-container/70 flex flex-col"><span>LAT: 45.992.1</span><span>LON: -12.443.0</span></div>
-                    <div class="absolute bottom-2 right-2 text-[10px] text-secondary-container/70 flex items-center gap-1">
-                        <div class="w-1.5 h-1.5 bg-secondary-container animate-pulse"></div> SYNCING...
+        <div class="grid grid-cols-12 gap-unit flex-1 min-h-0">
+            <div class="col-span-12 lg:col-span-3 flex flex-col gap-unit min-h-0">
+                <aside class="border border-outline-variant bg-surface flex flex-col relative h-[280px] shrink-0">
+                    <div class="bg-surface-container px-3 py-2 border-b border-outline-variant flex justify-between items-center shrink-0">
+                        <span class="text-[11px] font-bold tracking-widest text-on-surface flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[16px] text-primary-container">share</span> MINI LIVE NETWORK
+                        </span>
+                        <span class="text-[10px] text-on-surface-variant">SYS-NET-01</span>
                     </div>
-                </div>
-            </aside>
+                    <div class="flex-1 relative overflow-hidden bg-[#0a0d12]">
+                        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80 mix-blend-screen" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDBfSzgk6hVsoDQY0eEp9Zgw6MK3Qpyt3cFobwB1QjhxS_IkvcTJt6SpU76PGHSXcTP6arQBn8XFEBi5pIoNkucjFCt7-xEkInrbZRwTQZxi4-mR3WXB59beUHODOlcuZJ-j_1R4sDauN7-vdSgYUH9DSX3xZQhHWLCB06KEcAD_lCrz_--e90Jx6yGkfwPBZp5ROLtIzEE_I39JyfneKyyy-bet1KwbjiEU0EpYxGbkjjpkVjK_7MS')"></div>
+                        <div class="absolute inset-0 scan-line"></div>
+                        <div class="absolute top-2 left-2 text-[10px] text-primary-container/70 flex flex-col"><span>LAT: 45.992.1</span><span>LON: -12.443.0</span></div>
+                        <div class="absolute bottom-2 right-2 text-[10px] text-secondary-container/70 flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 bg-secondary-container animate-pulse"></div> SYNCING...
+                        </div>
+                    </div>
+                </aside>
+                <aside class="border border-outline-variant bg-surface flex flex-col bg-surface-dim flex-1 min-h-[220px]">
+                    <div class="bg-[#141a22] px-3 py-2 border-b border-outline-variant flex justify-between items-center shrink-0">
+                        <span class="text-[11px] font-bold tracking-widest text-on-surface flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[16px] text-on-surface-variant">terminal</span> LIVE INTEL FEED
+                        </span>
+                        <div class="flex items-center gap-1 text-[10px] text-primary-container">
+                            <div class="w-1.5 h-1.5 bg-primary-container rounded-full animate-pulse"></div> REC
+                        </div>
+                    </div>
+                    <div class="flex-1 min-h-0 overflow-y-auto p-3 text-[11px] leading-relaxed space-y-3" id="intel-feed-body">
+                        <div class="text-on-surface-variant animate-pulse">&gt; Reading case database...</div>
+                    </div>
+                </aside>
+            </div>
             
-            <section class="col-span-12 lg:col-span-6 border border-outline-variant bg-surface flex flex-col min-h-[400px]">
+            <section class="col-span-12 lg:col-span-9 border border-outline-variant bg-surface flex flex-col min-h-[400px] lg:h-full lg:min-h-0">
                 <div class="bg-surface-container px-3 py-2 border-b border-outline-variant flex justify-between items-center shrink-0">
                     <span class="text-[11px] font-bold tracking-widest text-on-surface flex items-center gap-2">
                         <span class="material-symbols-outlined text-[16px] text-error">target</span> HIGH RISK CLUSTERS
@@ -217,7 +233,7 @@
                         <span class="text-[10px] text-on-surface-variant">ID: CLS-992</span>
                     </div>
                 </div>
-                <div class="flex-1 p-2 space-y-1 overflow-y-auto">
+                <div class="flex-1 min-h-0 p-2 space-y-1 overflow-y-auto">
                     <div class="grid grid-cols-12 gap-2 px-3 py-1.5 text-[10px] tracking-widest text-on-surface-variant border-b border-outline-variant/30 uppercase">
                         <div class="col-span-3">Source Node</div><div class="col-span-2">Vector</div><div class="col-span-3">Target Node</div><div class="col-span-2 text-center">Threat</div><div class="col-span-2 text-right">Action</div>
                     </div>
@@ -227,19 +243,6 @@
                 </div>
             </section>
             
-            <aside class="col-span-12 lg:col-span-3 border border-outline-variant bg-surface flex flex-col bg-surface-dim min-h-[400px]">
-                <div class="bg-[#141a22] px-3 py-2 border-b border-outline-variant flex justify-between items-center shrink-0">
-                    <span class="text-[11px] font-bold tracking-widest text-on-surface flex items-center gap-2">
-                        <span class="material-symbols-outlined text-[16px] text-on-surface-variant">terminal</span> LIVE INTEL FEED
-                    </span>
-                    <div class="flex items-center gap-1 text-[10px] text-primary-container">
-                        <div class="w-1.5 h-1.5 bg-primary-container rounded-full animate-pulse"></div> REC
-                    </div>
-                </div>
-                <div class="flex-1 overflow-y-auto p-3 text-[11px] leading-relaxed space-y-3" id="intel-feed-body">
-                    <div class="text-on-surface-variant animate-pulse">&gt; Reading case database...</div>
-                </div>
-            </aside>
         </div>
     </div>
 </main>
@@ -264,7 +267,7 @@
                 
                 if(predictionCount > 0) {
                     const minConf = (window.krakenSettings ? window.krakenSettings().minConfidence : 0) || 0;
-                    data.predictions.filter(p => Number(p.confidence) >= minConf).slice(0, 5).forEach((pred) => {
+                    data.predictions.filter(p => Number(p.confidence) >= minConf).slice(0, 20).forEach((pred) => {
                         const confidence = pred.confidence > 1 ? pred.confidence.toFixed(1) : (pred.confidence * 100).toFixed(1);
                         
                         let rowClass = "border border-outline-variant/30 hover:bg-surface-container transition-colors";

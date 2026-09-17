@@ -96,6 +96,7 @@
         <a href="/intake" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">upload_file</span><span class="tracking-widest">Intake</span></a>
         <a href="/profile" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">person_search</span><span class="tracking-widest">Profiles</span></a>
         <a href="/reports" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">description</span><span class="tracking-widest">Reports</span></a>
+        <a href="/cases" class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:text-on-surface hover:bg-surface-container transition-colors border-l-4 border-transparent"><span class="material-symbols-outlined text-[18px]">folder_open</span><span class="tracking-widest">Case Files</span></a>
     </div>
 </nav>
 
@@ -200,8 +201,11 @@
                                     <span class="text-[9px] font-label-caps ${textColor} mb-1 tracking-widest">AI LINK</span>
                                     <div class="w-full h-px bg-outline-variant relative">
                                         <div class="absolute top-0 left-0 h-full w-full ${bgPulse} animate-pulse shadow-[0_0_8px_currentColor]"></div>
+                                        <!-- Icon ko line par hi centre karo. Bina offsets ke `absolute`
+                                             tha, isliye wo flow se nikal kar "AI LINK" text par chadh
+                                             jaata tha. -->
+                                        <span class="material-symbols-outlined text-[16px] ${textColor} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface px-1">link</span>
                                     </div>
-                                    <span class="material-symbols-outlined text-[16px] ${textColor} absolute bg-surface px-1">link</span>
                                 </div>
 
                                 <div class="flex-1 bg-[#0a0d12] border border-outline-variant/50 p-3 text-center relative overflow-hidden">

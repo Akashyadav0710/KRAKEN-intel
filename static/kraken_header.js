@@ -72,12 +72,58 @@
       + ".kh-badge{position:absolute;top:2px;right:2px;min-width:14px;height:14px;line-height:14px;"
       + "border-radius:7px;background:#ffb4ab;color:#690005;font-size:9px;font-family:" + MONO + ";"
       + "text-align:center;padding:0 3px;font-weight:700;}"
-      + ".kh-host{position:relative;}";
+      + ".kh-host{position:relative;}"
+      + ".kh-clue{border-left:3px solid #ffb4ab;}"
+      + ".kh-clue.warn{border-left-color:#feb700;}"
+      + ".kh-unread{display:inline-block;width:6px;height:6px;border-radius:3px;background:#ffb4ab;margin-right:5px;vertical-align:middle;}"
+      + ".kh-toasts{position:fixed;right:16px;bottom:16px;z-index:90;display:flex;flex-direction:column;gap:8px;"
+      + "font-family:" + MONO + ";max-width:360px;}"
+      + ".kh-toast{background:#0f141b;border:1px solid #ffb4ab;border-left-width:4px;padding:10px 12px;"
+      + "box-shadow:0 8px 30px rgba(0,0,0,.6);animation:khIn .25s ease-out;cursor:pointer;}"
+      + ".kh-toast.warn{border-color:#feb700;} .kh-toast.info{border-color:" + CYAN + ";}"
+      + ".kh-toast b{display:block;font-size:10px;letter-spacing:.18em;color:#ffb4ab;margin-bottom:4px;}"
+      + ".kh-toast.warn b{color:#feb700;} .kh-toast.info b{color:" + CYAN + ";}"
+      + ".kh-toast span{font-size:11px;color:#b9cacb;line-height:1.5;}"
+      + ".kh-toast.out{animation:khOut .25s ease-in forwards;}"
+      + "@keyframes khIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}"
+      + "@keyframes khOut{to{opacity:0;transform:translateX(20px)}}";
     var el = document.createElement("style");
     el.id = "kraken-header-style";
     el.textContent = css;
     document.head.appendChild(el);
   }
+
+  // ---------- TOAST: "NEW CLUE" jaisa turant alert ----------
+  function toastHost() {
+    var host = document.getElementById("kh-toasts");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "kh-toasts";
+      host.className = "kh-toasts";
+      document.body.appendChild(host);
+    }
+    return host;
+  }
+
+  function toast(title, detail, tone, href) {
+    injectStyle();
+    var el = document.createElement("div");
+    el.className = "kh-toast " + (tone || "high");
+    el.innerHTML = "<b>" + esc(title) + "</b><span>" + esc(detail) + "</span>";
+    if (href) el.addEventListener("click", function () { window.location.href = href; });
+    toastHost().appendChild(el);
+    setTimeout(function () {
+      el.classList.add("out");
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 260);
+    }, 7000);
+  }
+
+  function esc(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  window.krakenToast = toast;
 
   // ---------- popover plumbing ----------
   var openPop = null;
@@ -160,24 +206,56 @@
     return rows;
   }
 
+  // Intake se aayi "NEW CLUE" alerts -- ye sabse upar dikhti hain.
+  function clueRow(note) {
+    var tone = note.tone === "warn" ? "warn" : "";
+    var dot = note.read ? "" : '<span class="kh-unread"></span>';
+    return '<div class="kh-row clickable kh-clue ' + tone + '" '
+      + 'onclick="window.location.href=\'' + (note.href || "/intake") + '\'">'
+      + '<b style="color:' + (note.tone === "warn" ? "#feb700" : "#ffb4ab") + '">'
+      + dot + esc(note.title) + '</b>' + esc(note.detail)
+      + '<small>' + esc((note.created_at || "").replace("T", " ")) + '</small></div>';
+  }
+
+  function jsonOr(res, fallback) {
+    return res.ok ? res.json() : Promise.resolve(fallback);
+  }
+
+  async function fetchAll() {
+    var res = await Promise.all([
+      fetch("/api/stats"), fetch("/api/graph-data"),
+      fetch("/api/syndicates"), fetch("/api/manual-log"),
+      fetch("/api/dossiers"), fetch("/api/notifications")
+    ]);
+    return {
+      stats: (await jsonOr(res[0], {})).stats || {},
+      graph: await jsonOr(res[1], {}),
+      syn: await jsonOr(res[2], {}),
+      manual: await jsonOr(res[3], {}),
+      dossiers: (await jsonOr(res[4], {})).targets || [],
+      notes: await jsonOr(res[5], { notifications: [], unread: 0 })
+    };
+  }
+
   async function openBell(btn) {
     var pop = showPop('<h4>ALERTS<span style="color:#849495">LIVE CASE DATA</span></h4>'
       + '<div class="kh-row" style="color:#849495">Reading case database...</div>');
     try {
-      var res = await Promise.all([
-        fetch("/api/stats"), fetch("/api/graph-data"),
-        fetch("/api/syndicates"), fetch("/api/manual-log"), fetch("/api/dossiers")
-      ]);
-      var st = (await res[0].json()).stats || {};
-      var g = await res[1].json();
-      var syn = await res[2].json();
-      var manual = await res[3].json();
-      var dossiers = (await res[4].json()).targets || [];
+      var d = await fetchAll();
+      var notes = d.notes.notifications || [];
+      var rows = notes.slice(0, 12).map(clueRow)
+        .concat(buildAlerts(d.stats, d.graph.predictions || [], d.syn, d.manual, d.dossiers));
 
-      var rows = buildAlerts(st, g.predictions || [], syn, manual, dossiers);
       pop.innerHTML = '<h4>ALERTS<span style="color:#849495">' + rows.length + ' ACTIVE</span></h4>'
         + (rows.length ? rows.join("")
            : '<div class="kh-row" style="color:#849495">No active alerts. Case graph nominal.</div>');
+
+      // Khol liya to unread badge clear -- par rows dikhti rahengi.
+      if (d.notes.unread) {
+        fetch("/api/notifications/read", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: "{}"
+        }).then(function () { setBadge(btn, rows.length - d.notes.unread); }).catch(function () {});
+      }
       setBadge(btn, rows.length);
     } catch (e) {
       pop.innerHTML = '<h4>ALERTS</h4><div class="kh-row" style="color:#ffb4ab">Case database unreachable.</div>';
@@ -299,17 +377,21 @@
           openBell(btn);
         });
         // badge turant bhar do (bina kholay bhi count dikhe)
-        Promise.all([
-          fetch("/api/stats").then(function (r) { return r.json(); }),
-          fetch("/api/graph-data").then(function (r) { return r.json(); }),
-          fetch("/api/syndicates").then(function (r) { return r.json(); }),
-          fetch("/api/manual-log").then(function (r) { return r.json(); }),
-          fetch("/api/dossiers").then(function (r) { return r.json(); })
-        ]).then(function (all) {
-          var rows = buildAlerts(all[0].stats || {}, all[1].predictions || [],
-                                 all[2], all[3], all[4].targets || []);
-          setBadge(btn, rows.length);
+        fetchAll().then(function (d) {
+          var rows = buildAlerts(d.stats, d.graph.predictions || [], d.syn, d.manual, d.dossiers);
+          setBadge(btn, rows.length + (d.notes.notifications || []).length);
         }).catch(function () {});
+
+        // Doosre tab/page se FIR register hui ho to badge apne aap update ho.
+        setInterval(function () {
+          fetch("/api/notifications?unread=1")
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+              if (!d || !d.unread) return;
+              var current = Number((btn.querySelector(".kh-badge") || {}).innerText || 0);
+              if (d.unread > current) setBadge(btn, d.unread);
+            }).catch(function () {});
+        }, 20000);
       }
 
       if (name === "settings") {

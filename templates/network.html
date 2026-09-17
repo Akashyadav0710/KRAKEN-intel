@@ -69,7 +69,9 @@
                       "error": "#ffb4ab", "outline-variant": "#3b494b", "surface-container": "#1b2028",
                       "surface-container-low": "#171c24", "secondary-container": "#feb700",
                       "background": "#0f141b", "primary": "#dbfcff", "primary-container": "#00f0ff",
-                      "primary-fixed": "#7df4ff", "primary-fixed-dim": "#00dbe9", "surface": "#0f141b"
+                      "primary-fixed": "#7df4ff", "primary-fixed-dim": "#00dbe9", "surface": "#0f141b",
+                      "on-surface": "#dee2ee", "on-surface-variant": "#b9cacb", "outline": "#849495",
+                      "error-container": "#93000a", "surface-dim": "#0f141b", "surface-container-lowest": "#090e16"
               },
               "fontFamily": { "mono": ["JetBrains Mono", "monospace"] }
             }
@@ -115,6 +117,7 @@
             <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/intake"><span class="material-symbols-outlined text-[18px]">upload_file</span><span>Intake</span></a>
             <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/profile"><span class="material-symbols-outlined text-[18px]">person_search</span><span>Profiles</span></a>
             <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/reports"><span class="material-symbols-outlined text-[18px]">description</span><span>Reports</span></a>
+            <a class="flex items-center space-x-3 text-on-surface-variant px-4 py-3 hover:bg-surface-container transition-colors" href="/cases"><span class="material-symbols-outlined text-[18px]">folder_open</span><span>Case Files</span></a>
         </nav>
     </div>
 </aside>
@@ -149,15 +152,15 @@
         </div>
 
         <!-- ===== MAP KEY / LEGEND ===== -->
-        <div id="graph-legend" class="absolute bottom-6 left-4 z-20 w-[268px] max-w-[calc(100%-2rem)] bg-surface-container/95 border border-outline-variant backdrop-blur-sm pointer-events-auto shadow-[0_0_20px_rgba(0,0,0,0.6)]">
-            <button id="legend-toggle" class="w-full flex items-center justify-between px-3 py-2 bg-[#171c24] border-b border-outline-variant hover:bg-surface-container-highest transition-colors">
+        <div id="graph-legend" class="absolute bottom-6 left-4 z-20 w-[268px] max-w-[calc(100%-2rem)] max-h-[calc(100%-420px)] flex flex-col bg-surface-container/95 border border-outline-variant backdrop-blur-sm pointer-events-auto shadow-[0_0_20px_rgba(0,0,0,0.6)]">
+            <button id="legend-toggle" class="w-full shrink-0 flex items-center justify-between px-3 py-2 bg-[#171c24] border-b border-outline-variant hover:bg-surface-container-highest transition-colors">
                 <span class="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-primary-fixed">
                     <span class="material-symbols-outlined text-[14px] text-primary-container">key</span>MAP KEY
                 </span>
                 <span id="legend-chevron" class="material-symbols-outlined text-[16px] text-outline-variant transition-transform">expand_more</span>
             </button>
 
-            <div id="legend-body" class="p-3 space-y-3">
+            <div id="legend-body" class="p-3 space-y-3 overflow-y-auto min-h-0">
 
                 <!-- Entity shapes -->
                 <div>
@@ -236,18 +239,20 @@
         </div>
         <div class="p-3 space-y-2">
             <div class="relative">
-                <input id="path-from" type="text" spellcheck="false" placeholder="FROM: name / SIM / account"
-                       class="w-full bg-surface-container-low border border-outline-variant text-[10px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
-                <div id="path-from-list" class="hidden absolute left-0 right-0 top-full z-30 bg-surface-container border border-outline-variant max-h-40 overflow-y-auto"></div>
+                <span class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-mono font-bold tracking-widest text-primary-fixed-dim">FROM</span>
+                <input id="path-from" type="text" spellcheck="false" autocomplete="off" placeholder="name / SIM / account"
+                       class="w-full bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface caret-primary-container py-2 pl-11 pr-2 outline-none transition-colors placeholder:text-outline focus:border-primary-container focus:bg-surface-container-lowest focus:shadow-[0_0_10px_rgba(0,240,255,0.2)]">
+                <div id="path-from-list" class="hidden absolute left-0 right-0 top-full z-30 bg-surface-container border border-outline-variant max-h-40 overflow-y-auto shadow-[0_6px_16px_rgba(0,0,0,0.6)]"></div>
             </div>
             <div class="relative">
-                <input id="path-to" type="text" spellcheck="false" placeholder="TO: name / SIM / account"
-                       class="w-full bg-surface-container-low border border-outline-variant text-[10px] font-mono text-on-surface p-2 focus:border-primary-container outline-none placeholder:text-outline-variant/60">
-                <div id="path-to-list" class="hidden absolute left-0 right-0 top-full z-30 bg-surface-container border border-outline-variant max-h-40 overflow-y-auto"></div>
+                <span class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-mono font-bold tracking-widest text-primary-fixed-dim">TO</span>
+                <input id="path-to" type="text" spellcheck="false" autocomplete="off" placeholder="name / SIM / account"
+                       class="w-full bg-surface-container-low border border-outline-variant text-[11px] font-mono text-on-surface caret-primary-container py-2 pl-11 pr-2 outline-none transition-colors placeholder:text-outline focus:border-primary-container focus:bg-surface-container-lowest focus:shadow-[0_0_10px_rgba(0,240,255,0.2)]">
+                <div id="path-to-list" class="hidden absolute left-0 right-0 top-full z-30 bg-surface-container border border-outline-variant max-h-40 overflow-y-auto shadow-[0_6px_16px_rgba(0,0,0,0.6)]"></div>
             </div>
             <div class="grid grid-cols-3 gap-2">
-                <button id="btn-trace" class="col-span-2 bg-primary-container text-[#00363a] text-[10px] font-mono font-bold py-2 border border-primary-container hover:bg-transparent hover:text-primary-container transition-colors">TRACE PATH</button>
-                <button id="btn-path-clear" class="text-[10px] font-mono text-outline-variant border border-outline-variant py-2 hover:border-primary-container hover:text-primary-container transition-colors">CLEAR</button>
+                <button id="btn-trace" class="col-span-2 bg-primary-container text-[#00363a] text-[10px] font-mono font-bold tracking-wider py-2 border border-primary-container hover:bg-transparent hover:text-primary-container disabled:opacity-60 disabled:cursor-wait disabled:hover:bg-primary-container disabled:hover:text-[#00363a] transition-colors">TRACE PATH</button>
+                <button id="btn-path-clear" class="text-[10px] font-mono tracking-wider text-outline border border-outline-variant py-2 hover:border-primary-container hover:text-primary-container transition-colors">CLEAR</button>
             </div>
             <div id="path-result" class="max-h-56 overflow-y-auto"></div>
         </div>
@@ -958,9 +963,9 @@
                     const hits = data.results || [];
                     if (!hits.length) { list.innerHTML = ''; list.classList.add('hidden'); return; }
                     list.innerHTML = hits.map(h =>
-                        `<div class="px-2 py-1 text-[10px] font-mono text-on-surface-variant hover:bg-surface-container-highest cursor-pointer truncate"
+                        `<div class="px-2 py-1.5 text-[11px] font-mono text-on-surface-variant hover:bg-surface-container-highest hover:text-primary-container cursor-pointer truncate"
                               onclick="document.getElementById('${inputId}').value='${String(h.id).replace(/'/g, "\\'")}'; document.getElementById('${listId}').classList.add('hidden');">
-                            <span class="material-symbols-outlined text-[11px] align-middle text-outline-variant">${PATH_ICON[h.type] || 'hub'}</span>
+                            <span class="material-symbols-outlined text-[12px] align-middle text-outline">${PATH_ICON[h.type] || 'hub'}</span>
                             ${h.id}
                          </div>`).join('');
                     list.classList.remove('hidden');
